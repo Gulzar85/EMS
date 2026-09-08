@@ -1,0 +1,16 @@
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.16.6
+    hooks:
+      - id: ruff-check
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: django-makemigrations-check
+        name: Django makemigrations --check
+        entry: venv/Scripts/python.exe manage.py makemigrations --check --dry-run
+        language: system
+        pass_filenames: false
+        files: ^apps/.*/models\.py$

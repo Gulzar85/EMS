@@ -1,0 +1,52 @@
+{% load icons %}
+{# Nav placeholders: see apps/core/context_processors.py #}
+<aside
+  x-cloak
+  :class="mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'"
+  :style="!sidebarCollapsed ? 'width: var(--sidebar-width-expanded)' : 'width: var(--sidebar-width-collapsed)'"
+  class="fixed inset-y-0 left-0 z-40 flex flex-col border-r border-default bg-surface transition-all duration-200 lg:static lg:translate-x-0"
+>
+  <div class="flex h-[var(--navbar-height)] items-center gap-2 border-b border-default px-4">
+    <div class="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-card)] bg-brand text-xs font-bold text-white">EMS</div>
+    <span x-show="!sidebarCollapsed" class="truncate text-sm font-semibold text-primary">EMS Pakistan</span>
+  </div>
+
+  <nav class="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Primary">
+    <a href="{% url 'core:home' %}"
+       aria-current="page"
+       class="flex items-center gap-3 rounded-[var(--radius-button)] bg-brand/10 px-3 py-2 text-sm font-medium text-brand">
+      {% icon "home" size=18 %}
+      <span x-show="!sidebarCollapsed">Dashboard</span>
+    </a>
+
+    {% for item in coming_soon_nav %}
+    <div class="flex cursor-not-allowed items-center justify-between gap-3 rounded-[var(--radius-button)] px-3 py-2 text-sm text-secondary" title="Coming soon">
+      <span class="flex items-center gap-3">
+        {% icon item.icon size=18 %}
+        <span x-show="!sidebarCollapsed">{{ item.label }}</span>
+      </span>
+      <span x-show="!sidebarCollapsed"><c-badge>Soon</c-badge></span>
+    </div>
+    {% endfor %}
+  </nav>
+
+  <div class="border-t border-default p-3">
+    <button
+      type="button"
+      @click="toggleSidebarCollapsed()"
+      class="hidden w-full items-center justify-center rounded-[var(--radius-button)] p-2 text-secondary hover:bg-background lg:flex"
+      :aria-expanded="!sidebarCollapsed"
+      aria-label="Toggle sidebar width"
+    >
+      {% icon "panel-left" size=18 %}
+    </button>
+  </div>
+</aside>
+
+<div
+  x-show="mobileSidebarOpen"
+  x-cloak
+  @click="mobileSidebarOpen = false"
+  class="fixed inset-0 z-30 bg-black/40 lg:hidden"
+  aria-hidden="true"
+></div>

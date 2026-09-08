@@ -1,0 +1,22 @@
+{% cotton:vars variant="primary" type="button" href="" class="" %}
+{% if href %}
+<a
+  href="{{ href }}"
+  {{ attrs }}
+  class="inline-flex items-center justify-center gap-2 rounded-[var(--radius-button)] px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand
+    {% if variant == 'primary' %}bg-brand text-white hover:bg-brand-hover
+    {% elif variant == 'secondary' %}bg-surface text-primary border border-default hover:bg-background
+    {% elif variant == 'danger' %}bg-danger text-white hover:opacity-90
+    {% else %}text-primary hover:bg-background{% endif %} {{ class }}"
+>{{ slot }}</a>
+{% else %}
+<button
+  type="{{ type }}"
+  {{ attrs }}
+  class="inline-flex items-center justify-center gap-2 rounded-[var(--radius-button)] px-4 py-2 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50 disabled:pointer-events-none
+    {% if variant == 'primary' %}bg-brand text-white hover:bg-brand-hover
+    {% elif variant == 'secondary' %}bg-surface text-primary border border-default hover:bg-background
+    {% elif variant == 'danger' %}bg-danger text-white hover:opacity-90
+    {% else %}text-primary hover:bg-background{% endif %} {{ class }}"
+>{{ slot }}</button>
+{% endif %}

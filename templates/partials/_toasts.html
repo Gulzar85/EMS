@@ -1,0 +1,20 @@
+{# Rendered once in base/app.html; populated at runtime from the shared
+   Alpine "toast" store (see static/src/js/alpine/index.js), which htmx
+   error handlers push into (see static/src/js/htmx/index.js). #}
+<div
+  x-data
+  class="pointer-events-none fixed bottom-4 right-4 z-50 flex w-80 flex-col gap-2"
+  aria-live="polite"
+>
+  <template x-for="item in $store.toast.items" :key="item.id">
+    <div
+      x-show="true"
+      x-transition
+      class="pointer-events-auto rounded-[var(--radius-card)] border border-default bg-surface p-3 text-sm shadow-lg"
+      :class="item.variant === 'danger' ? 'text-danger' : 'text-primary'"
+      x-text="item.message"
+      @click="$store.toast.dismiss(item.id)"
+      role="alert"
+    ></div>
+  </template>
+</div>

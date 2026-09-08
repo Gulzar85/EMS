@@ -1,0 +1,61 @@
+# Component Architecture
+
+Status: Final (Phase 01 baseline)
+Audience: Engineers implementing the reusable UI component inventory.
+
+Related documents:
+- [Frontend Architecture](../architecture/frontend-architecture.md)
+- [Theme Architecture](../architecture/theme-architecture.md)
+- [Design System](design-system.md)
+- [Theme System — implementation mechanics](theme-system.md)
+
+This is a **reference**, not a tutorial: for each component in the required inventory, it states the implementation approach (which of Tailwind/Alpine/HTMX/django-cotton-or-include/crispy-tailwind applies) and any third-party JS involved.
+
+## django-cotton vs. plain `{% include %}` — the threshold
+
+- Use **django-cotton** (`<c-component-name>` syntax) when a component has **structural composition**: named slots (header/body/footer), nested content, or multiple variants that benefit from component-style props (e.g. `<c-modal title="Edit Employee">...</c-modal>`). Cotton components live in `templates/components/` with a `c_` prefix or cotton's app-config naming and are used for Modal, Card, Data Table, Tabs, Command Palette.
+- Use **plain `{% include %}` + a template tag/filter for variants** when a component is a simple, mostly-flat chunk of markup with a small number of parameters (e.g. `{% include "components/badge.html" with variant="success" text="Active" %}`). This is used for Badge, Alert, Avatar, and other visually simple, non-nesting components.
+- The threshold: **does the component need to wrap arbitrary child content in more than one place (slots)?** If yes → Cotton. If it just needs a handful of scalar parameters → plain include.
+
+---
+
+## Component Inventory
+
+| Component | Styling (Tailwind + theme vars) | Interactivity | Templating | Forms lib | Third-party JS |
+|---|---|---|---|---|---|
+| **Buttons** | `bg-[var(--color-primary)]`, `rounded-[var(--radius-button)]`, `shadow-[var(--shadow-button)]` variants (primary/secondary/danger/ghost) | None beyond native `:hover`/`:focus`/`:disabled` states | Plain include (`components/button.html`) with a `variant` param | crispy-tailwind uses this styling for submit buttons | Not needed |
+| **Cards** | `bg-[var(--color-surface)] rounded-[var(--radius-card)] shadow-[var(--shadow-md)] border border-[var(--color-border)]` | None | django-cotton `<c-card>` with header/body/footer slots | — | Not needed |
+| **Stat Cards** | Card styling + large numeral typography token | Refreshed via HTMX (`hx-trigger="load, <event> from:body"`) when underlying data changes elsewhere on the page | Plain include, parametrized by label/value/icon/trend | — | Not needed |
+| **Tables** | `border-[var(--color-border)]` row dividers, density via `--spacing-unit` | Sortable/paginated via django-tables2; row-level inline actions via HTMX | django-cotton `<c-data-table>` wraps a django-tables2 `Table` render, with slots for row actions | django-filter renders the accompanying filter form via crispy-tailwind | Not needed |
+| **Pagination** | Themed active/disabled states via `--color-primary` | Page links are HTMX (`hx-get`, swap `#table-body` + OOB page-info) so paging never full-reloads | Plain include, produced by django-tables2/django-filter's paginator context | — | Not needed |
+| **Forms** | Field spacing/labels via density tokens | Multi-step forms use Alpine `wizard()` for step visibility only; submission is HTMX or normal POST | Rendered via `{% crispy form %}` | **crispy-forms + crispy-tailwind** (custom pack) | Not needed |
+| **Inputs** | `border-[var(--color-border)] rounded-[var(--radius-input)] focus:ring-[var(--color-primary)]` | Native; error state driven by `form.errors` | crispy-tailwind field template | **crispy-tailwind** | Not needed |
+| **Selects** | Same input styling as above for native `<select>`; Tom Select instance is re-skinned to match via a custom Tom Select theme/CSS layer referencing the same variables | Tom Select handles search-as-you-type filtering client-side (for small-to-medium option sets) or with a remote HTMX/fetch source for very large lists (e.g. all employees) | crispy-tailwind field template + a small Alpine/JS initializer that instantiates Tom Select on `x-init` | **crispy-tailwind** (base field), Tom Select progressively enhances it | **Tom Select** (required — for large restaurant/employee/manager pickers) |
+| **Date Pickers** | Input styling as above; Flatpickr's calendar popup is themed via CSS variable overrides matching the design system | Flatpickr handles the calendar UI and date parsing/formatting client-side; selected value posts as a normal form field | crispy-tailwind field template + Flatpickr initializer | **crispy-tailwind** (base field) | **Flatpickr** (required — effective-dated HR forms) |
+| **Modals** | Surface/shadow/radius tokens, `--shadow-lg` | Alpine `modal()` controls open/close chrome and focus trap/`Escape`-to-close; **content is loaded via `hx-get` into the modal body on open** for on-demand modals (e.g. "View Employee Details") | django-cotton `<c-modal>` (slot-based: title, body, footer/actions) | If the modal contains a form, that form still uses crispy-tailwind | Not needed |
+| **Dialogs** | Same as Modals, typically smaller (confirmation dialogs) | Alpine `modal()` variant; confirm action triggers an HTMX POST (e.g. delete) | django-cotton `<c-dialog>` or a Modal variant | — | Not needed |
+| **Alerts** | `bg-[var(--color-success)]`/`warning`/`danger`/`info` variants at reduced opacity + matching border/text | None (or Alpine `x-data="{ show: true }"` for dismissible alerts) | Plain include (`components/alert.html`) with a `variant` param | Used to surface non-field form errors | Not needed |
+| **Badges** | `rounded-[var(--radius-badge)]` + semantic color variant, small text | None | Plain include (`components/badge.html`) | Used to render status fields (Active/Terminated/Pending) | Not needed |
+| **Avatars** | `rounded-full`, sized via a small fixed scale (sm/md/lg), fallback initials on `bg-[var(--color-secondary)]` | None | Plain include, falls back to initials when no photo is set | — | Not needed |
+| **Dropdowns** | Surface/shadow/radius on the panel | Alpine `dropdown()` (open/toggle/outside-click/`Escape`) | Plain include or Cotton depending on whether it has a header/footer slot (menu = plain; rich dropdown panel = Cotton) | — | Not needed |
+| **Tabs** | Active-tab underline/background via `--color-primary` | Alpine `tabs(initial)` toggles panel visibility (panels already rendered server-side — no HTMX needed unless a tab's content is expensive, in which case it lazy-loads via `hx-get` on first activation) | django-cotton `<c-tabs>` with a slot per panel | — | Not needed |
+| **Breadcrumbs** | Text-secondary separators, `--color-primary` on the active/current crumb | None | Plain include, built from a context list of `(label, url)` | — | Not needed |
+| **Sidebar** | `--layout-sidebar-width`, `--layout-sidebar-position`, surface background | Alpine controls collapsed/expanded state on smaller viewports (persisted to `localStorage` for UX convenience only — not server state) | Part of `layouts/app-shell.html`, composed from a nav-items include | — | Not needed |
+| **Navbar** | `--layout-navbar-height`, surface background, border-bottom | Alpine for user-menu dropdown (reuses Dropdown pattern) | Part of `layouts/app-shell.html` | — | Not needed |
+| **Command Palette** | Overlay + `--shadow-lg`, surface panel | See dedicated note below — Alpine manages open state (global keyboard shortcut) and query input; results come from a lightweight search endpoint via `fetch`/HTMX | django-cotton `<c-command-palette>` | — | Not needed (no external library — implemented directly with Alpine + fetch/HTMX; see below) |
+| **Timeline** | Vertical connector line via `border-[var(--color-border)]`, node markers in semantic colors | None for Phase 01 (chronological, server-ordered list of events — e.g. an employee's HR history); Alpine only if a future collapse/expand-per-entry interaction is added | Plain include, iterates a server-provided ordered queryset | — | **SortableJS not needed** — no drag-reorder requirement for Timeline in Phase 01; revisit only if a future drag-reorder UI (e.g. shift scheduling) appears |
+| **Empty States** | Centered layout, muted `--color-text-secondary`, Lucide illustrative icon | None | Plain include, parametrized by icon/title/description/optional action button | — | Not needed |
+| **Loading States** | Skeleton blocks using `--color-border`/surface tones, or a spinner using `--color-primary` | Shown/hidden automatically by HTMX via `hx-indicator` (see [frontend-architecture.md](../architecture/frontend-architecture.md) §4.4) | Plain include (`components/loading_state.html`) | — | Not needed |
+| **Error States** | Danger-toned icon/text, card layout | Rendered by the global `htmx:responseError`/`htmx:sendError` listener swapping in this component, or directly by a view for a full-page error (403/404/500 templates) | Plain include, also used as `templates/403.html`/`404.html`/`500.html` content | — | Not needed |
+| **Charts** | Chart container sized/bordered with card tokens; chart colors pulled from the semantic palette (primary/secondary/success/warning/danger/info) at render time so charts stay on-theme | Chart.js instances initialized client-side from a small JSON data payload rendered into the page (or fetched via a dedicated HTMX/fetch endpoint for dashboards that refresh) | Plain include with a `<canvas>` + a small Alpine/JS initializer passing config | — | **Chart.js** (required — dashboard bar/line/pie) |
+| **File Uploads** | Input/dropzone styled with input tokens, dashed border for drag-target state | Plain HTML5 `<input type="file">` + Alpine for drag-over visual state and selected-file-name preview; actual upload is a normal/HTMX form POST | Plain include | Uses crispy-tailwind for the surrounding form field label/errors | **Plain input + Alpine chosen over FilePond for Phase 01** — the documents domain (uploading ID copies, contracts, certificates) does not yet demonstrate a UX bar (multi-file progress bars, image cropping, chunked upload) that justifies FilePond's added dependency; revisit if that need appears. |
+
+---
+
+## Command Palette — Note on JS Weight
+
+The Command Palette is the **one component that is deliberately more JavaScript-heavy** than the rest of the inventory, and this is a considered exception rather than a drift from the "server-rendered, minimal JS" principle:
+
+- It is triggered by a **global keyboard shortcut** (e.g. `Cmd/Ctrl+K`) that must work from anywhere in the app, independent of which page/partial is currently loaded — this is inherently a client-side concern (listening for a key combo at the document level), which Alpine handles via a small always-mounted component in `layouts/app-shell.html`.
+- Once open, it needs **fast, incremental search-as-you-type** across cross-cutting entities (employees, restaurants, pages/actions) — implemented as `fetch`/`hx-get` calls to a lightweight, purpose-built search endpoint (e.g. `/search/palette/?q=...`) debounced client-side by Alpine, with results rendered from a small HTMX-returned partial.
+- This is justified because the Command Palette is **cross-cutting navigation/search infrastructure**, not a per-page concern like every other component in this table — it behaves more like a mini-application-within-the-app (open state, keyboard navigation of results with arrow keys, debounced querying) that would be awkward to express as pure server round-trips without any client orchestration. Every other component in the inventory achieves its behavior with either zero JS or a small reusable Alpine primitive (dropdown/modal/tabs/wizard); the Command Palette is the deliberate, singular exception, scoped narrowly to keyboard handling, debouncing, and result-list keyboard navigation — it still delegates the actual search logic and result data to the server, never duplicating business logic client-side.

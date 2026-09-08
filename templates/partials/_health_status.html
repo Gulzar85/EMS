@@ -1,0 +1,21 @@
+{% load icons %}
+<div id="health-status" class="space-y-3">
+  <div class="flex items-center gap-2">
+    {% if status == "ok" %}
+      {% icon "circle-check" size=18 class_name="text-success" %}
+      <c-badge variant="success">All systems operational</c-badge>
+    {% else %}
+      {% icon "circle-alert" size=18 class_name="text-danger" %}
+      <c-badge variant="danger">Attention needed</c-badge>
+    {% endif %}
+  </div>
+
+  <ul class="space-y-1 text-sm">
+    {% for name, value in checks.items %}
+    <li class="flex items-center justify-between border-b border-default py-1 last:border-0">
+      <span class="capitalize text-secondary">{{ name }}</span>
+      <span class="{% if value == 'ok' %}text-success{% else %}text-danger{% endif %} font-medium">{{ value }}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</div>

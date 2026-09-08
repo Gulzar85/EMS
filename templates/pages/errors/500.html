@@ -1,0 +1,17 @@
+{% extends "base/blank.html" %}
+{% load icons %}
+
+{% block title %}Something went wrong — EMS{% endblock %}
+
+{% block content %}
+<div class="mx-auto flex min-h-screen max-w-md flex-col items-center justify-center px-4 text-center">
+  <c-card class="w-full">
+    {% icon "circle-alert" size=32 class_name="mx-auto text-danger" %}
+    <h1 class="mt-4 text-lg font-semibold text-primary">Something went wrong</h1>
+    <p class="mt-2 text-sm text-secondary">
+      An unexpected error occurred. It's been logged and we'll look into it — please try again shortly.
+    </p>
+    <c-button variant="primary" class="mt-6" href="/">Go home</c-button>
+  </c-card>
+</div>
+{% endblock %}

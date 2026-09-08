@@ -1,0 +1,5 @@
+{% cotton:vars title="" class="" %}
+<div {{ attrs }} class="rounded-[var(--radius-card)] border border-default bg-surface p-6 shadow-sm {{ class }}">
+  {% if title %}<h3 class="mb-4 text-base font-semibold text-primary">{{ title }}</h3>{% endif %}
+  {{ slot }}
+</div>

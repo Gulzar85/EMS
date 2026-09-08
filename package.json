@@ -1,0 +1,16 @@
+{
+  "name": "ems-frontend",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Tailwind CSS build for the EMS Django project. No JS bundler — Alpine.js and htmx are vendored static files (see static/vendor/js/).",
+  "scripts": {
+    "build:css": "tailwindcss -i ./static/src/css/app.css -o ./static/dist/css/app.css --minify",
+    "watch:css": "tailwindcss -i ./static/src/css/app.css -o ./static/dist/css/app.css --watch",
+    "build:js": "node scripts/copy-js.js",
+    "build": "npm run build:css && npm run build:js"
+  },
+  "devDependencies": {
+    "@tailwindcss/cli": "^4.1.0",
+    "tailwindcss": "^4.1.0"
+  }
+}

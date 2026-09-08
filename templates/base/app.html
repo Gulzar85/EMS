@@ -1,0 +1,17 @@
+{% extends "base/blank.html" %}
+
+{% block content %}
+<div x-data="appShell" class="flex min-h-screen">
+  {% include "layouts/_sidebar.html" %}
+
+  <div class="flex min-h-screen flex-1 flex-col">
+    {% include "layouts/_navbar.html" %}
+
+    <main id="main-content" class="flex-1 p-4 lg:p-6">
+      {% block page_content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+{% include "partials/_toasts.html" %}
+{% endblock %}

@@ -1,0 +1,11 @@
+{% extends "base/blank.html" %}
+
+{% block title %}System status — EMS{% endblock %}
+
+{% block content %}
+<div class="mx-auto max-w-md px-4 py-16">
+  <c-card title="System status">
+    {% include "partials/_health_status.html" %}
+  </c-card>
+</div>
+{% endblock %}

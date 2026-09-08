@@ -1,0 +1,17 @@
+{% extends "base/blank.html" %}
+{% load static %}
+
+{% block content %}
+<div class="flex min-h-screen items-center justify-center px-4">
+  <div class="w-full max-w-sm">
+    <div class="mb-8 text-center">
+      <div class="mx-auto flex h-10 w-10 items-center justify-center rounded-[var(--radius-card)] bg-brand text-sm font-bold text-white">EMS</div>
+      <h1 class="mt-4 text-xl font-semibold text-primary">Employee Management System</h1>
+      <p class="text-sm text-secondary">McDonald&rsquo;s Pakistan</p>
+    </div>
+    <c-card>
+      {% block auth_content %}{% endblock %}
+    </c-card>
+  </div>
+</div>
+{% endblock %}

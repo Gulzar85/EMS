@@ -1,0 +1,45 @@
+# Environments
+.env
+venv/
+.venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+/build/
+/dist/
+
+# Django
+*.log
+media/*
+!media/.gitkeep
+staticfiles/
+static/dist/*
+!static/dist/.gitkeep
+db.sqlite3
+
+# Node / frontend build
+node_modules/
+
+# Testing / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# Type checking / linting caches
+.mypy_cache/
+.ruff_cache/
+
+# Editors / IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db

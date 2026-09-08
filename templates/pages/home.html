@@ -1,0 +1,33 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}Dashboard — EMS{% endblock %}
+
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <c-card title="Welcome">
+    <p class="text-sm text-secondary">
+      Signed in as <span class="font-medium text-primary">{{ request.user.get_full_name }}</span>.
+      This is the technical foundation for the McDonald's Pakistan Employee Management System —
+      business modules (Employees, Organization, Leave, and the rest) are built in later phases.
+    </p>
+  </c-card>
+
+  <c-card title="System status">
+    <div class="mb-4 flex items-center justify-between">
+      <p class="text-sm text-secondary">Live check of the services this application depends on.</p>
+      <c-button
+        variant="secondary"
+        hx-get="{% url 'core:health-ready' %}"
+        hx-target="#health-status"
+        hx-swap="outerHTML"
+        hx-indicator="#health-refresh-spinner"
+      >
+        <span id="health-refresh-spinner" class="htmx-indicator">{% icon "loader-circle" size=16 class_name="animate-spin" %}</span>
+        Refresh status
+      </c-button>
+    </div>
+    {% include "partials/_health_status.html" %}
+  </c-card>
+</div>
+{% endblock %}

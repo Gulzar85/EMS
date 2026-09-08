@@ -1,0 +1,18 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en" class="no-js">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}EMS{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+</head>
+<body class="bg-background text-primary min-h-screen">
+  {% block content %}{% endblock %}
+
+  <script src="{% static 'js/vendor/htmx.min.js' %}"></script>
+  <script src="{% static 'js/htmx/index.js' %}"></script>
+  <script src="{% static 'js/alpine/index.js' %}"></script>
+  <script src="{% static 'js/app.js' %}"></script>
+  <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+/*
+ * Tailwind v4 entry point.
+ *
+ * Design tokens are declared as CSS custom properties inside @theme. Tailwind
+ * v4 generates real utility classes from these (bg-surface, text-primary,
+ * border-default, bg-brand, ...) AND compiles each utility to *reference*
+ * the variable (e.g. `color: var(--color-primary)`), not an inlined value.
+ * That's what makes Phase 02's Dynamic Theme Engine possible: it only has to
+ * override the *values* of these same variables at runtime via a generated
+ * /theme.css layer loaded after this stylesheet — it never invents new
+ * Tailwind classes (see docs/adr/ADR-006-dynamic-theme-architecture.md).
+ *
+ * Naming note (a real conflict discovered during implementation, resolved
+ * here rather than left ambiguous): Phase 00's docs use "Primary"/"Secondary"
+ * for BOTH a configurable brand/action color AND, separately, "Text primary"/
+ * "Text secondary" for default text color. Tailwind v4 auto-generates bg-,
+ * text-, and border- utilities from the SAME `--color-{name}` variable, so
+ * both concepts can't share the word "primary" without one utility silently
+ * winning. Phase 01 section 50 explicitly wants `text-primary` and
+ * `border-default` as literal class names, so those two win the short names;
+ * the brand/action color (Phase 00's "Primary"/"Secondary"/"Accent") is
+ * namespaced under `--color-brand-*` instead (`bg-brand`, `bg-brand-hover`).
+ * Components must only ever use these semantic utilities — never raw
+ * palette classes like bg-red-600.
+ */
+
+@import "tailwindcss";
+
+@source "../../../templates";
+@source "../../../apps";
+
+@theme {
+  /* Brand / action colors — Phase 00's "Primary"/"Secondary"/"Accent".
+     Placeholder defaults pending brand guideline sign-off. */
+  --color-brand: #da291c;
+  --color-brand-hover: #b72116;
+  --color-brand-secondary: #27251f;
+  --color-brand-accent: #ffc72c;
+
+  /* Surface / text / border — Phase 00's "Background"/"Surface"/
+     "Text primary"/"Text secondary"/"Border". */
+  --color-background: #f7f7f5;
+  --color-surface: #ffffff;
+  --color-primary: #1f2937; /* default text color -> text-primary */
+  --color-secondary: #6b7280; /* secondary text color -> text-secondary */
+  --color-default: #e5e7eb; /* default border color -> border-default */
+
+  /* Status colors */
+  --color-success: #16a34a;
+  --color-warning: #d97706;
+  --color-danger: #dc2626;
+  --color-info: #2563eb;
+
+  /* Typography */
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+
+  /* Layout */
+  --sidebar-width-expanded: 16rem;
+  --sidebar-width-collapsed: 4.5rem;
+  --navbar-height: 3.5rem;
+
+  /* Components */
+  --radius-card: 0.5rem;
+  --radius-input: 0.375rem;
+  --radius-button: 0.375rem;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-background: #111827;
+    --color-surface: #1f2937;
+    --color-primary: #f3f4f6;
+    --color-secondary: #9ca3af;
+    --color-default: #374151;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-background: #111827;
+  --color-surface: #1f2937;
+  --color-primary: #f3f4f6;
+  --color-secondary: #9ca3af;
+  --color-default: #374151;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-background);
+    color: var(--color-primary);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+  }
+
+  /* Alpine hides [x-cloak] elements only once it has loaded; without this
+     rule they flash visible on first paint. */
+  [x-cloak] {
+    display: none !important;
+  }
+}
+
+@layer utilities {
+  .htmx-indicator {
+    opacity: 0;
+    transition: opacity 150ms ease-in;
+  }
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    opacity: 1;
+  }
+}

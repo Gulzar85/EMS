@@ -1,0 +1,43 @@
+[project]
+name = "ems"
+version = "0.1.0"
+description = "McDonald's Pakistan Employee Management System"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.1,<6.2",
+    "psycopg[binary]>=3.2",
+    "django-environ>=0.11",
+    "django-crispy-forms>=2.3",
+    "crispy-tailwind>=1.0",
+    "django-cotton>=1.4",
+    "django-axes>=7.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3",
+    "pytest-django>=4.9",
+    "factory-boy>=3.3",
+    "ruff>=0.7",
+    "pre-commit>=4.0",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+python_files = ["test_*.py"]
+testpaths = ["apps", "tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["migrations", "venv", "static", "media"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "DJ"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.ruff.format]
+quote-style = "double"
