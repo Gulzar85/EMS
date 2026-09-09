@@ -1,0 +1,7 @@
+{% cotton:vars class="" %}
+{# Caller provides thead/tbody directly — responsive overflow + cell styling. #}
+<div class="overflow-x-auto rounded-[var(--radius-card)] border border-default">
+  <table class="w-full text-left text-sm [&_th]:border-b [&_th]:border-default [&_th]:bg-background [&_th]:px-4 [&_th]:py-2 [&_th]:font-medium [&_th]:text-secondary [&_td]:border-b [&_td]:border-default [&_td]:px-4 [&_td]:py-3 [&_td]:text-primary [&_tbody_tr:last-child_td]:border-0 {{ class }}">
+    {{ slot }}
+  </table>
+</div>

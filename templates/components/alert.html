@@ -1,0 +1,19 @@
+{% cotton:vars variant="info" dismissible="" class="" %}
+<div
+  x-data="{ show: true }"
+  x-show="show"
+  x-cloak
+  role="alert"
+  class="flex items-start gap-3 rounded-[var(--radius-card)] border p-3 text-sm
+    {% if variant == 'success' %}border-success/30 bg-success/10 text-success
+    {% elif variant == 'warning' %}border-warning/30 bg-warning/10 text-warning
+    {% elif variant == 'danger' %}border-danger/30 bg-danger/10 text-danger
+    {% else %}border-info/30 bg-info/10 text-info{% endif %} {{ class }}"
+>
+  <div class="flex-1">{{ slot }}</div>
+  {% if dismissible %}
+  <button type="button" @click="show = false" aria-label="Dismiss" class="shrink-0 opacity-70 hover:opacity-100">
+    {% load icons %}{% icon "x" size=16 %}
+  </button>
+  {% endif %}
+</div>

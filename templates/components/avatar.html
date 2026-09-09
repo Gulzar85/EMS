@@ -1,0 +1,10 @@
+{% cotton:vars src="" initials="" size="md" class="" %}
+<span
+  {{ attrs }}
+  class="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-brand font-semibold text-white
+    {% if size == 'sm' %}h-6 w-6 text-[10px]
+    {% elif size == 'lg' %}h-12 w-12 text-base
+    {% else %}h-8 w-8 text-xs{% endif %} {{ class }}"
+>
+  {% if src %}<img src="{{ src }}" alt="" class="h-full w-full object-cover">{% else %}{{ initials }}{% endif %}
+</span>

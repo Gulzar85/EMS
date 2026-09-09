@@ -1,0 +1,44 @@
+{% extends "base/app.html" %}
+{% load icons static %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div x-data="themeStudio()" @input="onFieldInput($event)">
+  <c-breadcrumb class="mb-4">
+    <li><a href="{% url 'theme:list' %}" class="hover:underline">Themes</a></li>
+    <li><a href="{% url 'theme:detail' theme.public_id %}" class="hover:underline">{{ theme.name }}</a></li>
+    <li class="text-primary">Studio</li>
+  </c-breadcrumb>
+
+  <div class="grid gap-6 lg:grid-cols-2">
+    <div>
+      <c-card title="Tokens">
+        <p class="mb-4 text-sm text-secondary">
+          Changes here update the preview instantly and are only saved to the database when
+          you click "Save draft" — nothing is persisted per keystroke.
+        </p>
+        {% include "theme/partials/theme_studio_form.html" %}
+      </c-card>
+    </div>
+
+    <div class="lg:sticky lg:top-20 lg:self-start">
+      <c-card title="Live preview">
+        <div class="mb-3 flex items-center justify-between">
+          <p class="text-sm text-secondary">Unsaved — this pane only, not the rest of the app.</p>
+          <div class="flex gap-1" role="group" aria-label="Preview appearance">
+            <button type="button" @click="setPreviewMode('light')" :class="previewMode === 'light' ? 'bg-brand text-white' : 'text-secondary hover:bg-background'" class="rounded-[var(--radius-button)] p-1.5" aria-label="Preview light">{% icon "sun" size=16 %}</button>
+            <button type="button" @click="setPreviewMode('dark')" :class="previewMode === 'dark' ? 'bg-brand text-white' : 'text-secondary hover:bg-background'" class="rounded-[var(--radius-button)] p-1.5" aria-label="Preview dark">{% icon "moon" size=16 %}</button>
+          </div>
+        </div>
+        <div x-ref="preview" class="rounded-[var(--radius-card)] border border-default p-4" style="background-color: var(--color-background)">
+          {% include "theme/partials/preview_sample.html" %}
+        </div>
+      </c-card>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{% static 'js/components/theme-studio.js' %}"></script>
+{% endblock %}

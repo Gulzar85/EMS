@@ -1,0 +1,15 @@
+{% load crispy_forms_tags %}
+<form
+  id="theme-studio-form"
+  method="post"
+  action="{% url 'theme:studio' theme.public_id %}"
+  hx-post="{% url 'theme:studio' theme.public_id %}"
+  hx-target="#theme-studio-form"
+  hx-swap="outerHTML"
+>
+  {% csrf_token %}
+  {% crispy form %}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save draft</c-button>
+  </div>
+</form>

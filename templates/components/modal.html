@@ -1,0 +1,24 @@
+{% cotton:vars open_var="" title="" class="" %}
+{# open_var: an Alpine boolean already in scope on a parent x-data. Focus-trapped and Escape/backdrop-dismissible via the vendored @alpinejs/focus plugin. #}
+<template x-teleport="body">
+  <div
+    x-show="{{ open_var }}"
+    x-cloak
+    class="fixed inset-0 z-50 flex items-center justify-center p-4"
+    role="dialog"
+    aria-modal="true"
+    {% if title %}aria-label="{{ title }}"{% endif %}
+  >
+    <div x-show="{{ open_var }}" x-transition.opacity @click="{{ open_var }} = false" class="fixed inset-0 bg-black/50"></div>
+    <div
+      x-show="{{ open_var }}"
+      x-transition
+      x-trap="{{ open_var }}"
+      @keydown.escape.window="{{ open_var }} = false"
+      class="relative z-10 w-full max-w-md rounded-[var(--radius-card)] border border-default bg-surface p-6 shadow-lg {{ class }}"
+    >
+      {% if title %}<h2 class="mb-4 text-base font-semibold text-primary">{{ title }}</h2>{% endif %}
+      {{ slot }}
+    </div>
+  </div>
+</template>

@@ -1,0 +1,6 @@
+{% load icons %}
+{% cotton:vars label="Loading…" class="" %}
+<div class="flex items-center justify-center gap-2 py-12 text-sm text-secondary {{ class }}" role="status">
+  {% icon "loader-circle" size=20 class_name="animate-spin" %}
+  <span>{{ label }}</span>
+</div>

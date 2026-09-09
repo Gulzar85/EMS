@@ -1,0 +1,14 @@
+{% load crispy_forms_tags %}
+<form
+  id="theme-form"
+  method="post"
+  action="{% if theme %}{% url 'theme:update' theme.public_id %}{% else %}{% url 'theme:create' %}{% endif %}"
+  {% if not theme %}hx-boost="false"{% endif %}
+>
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if theme %}{% url 'theme:detail' theme.public_id %}{% else %}{% url 'theme:list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>

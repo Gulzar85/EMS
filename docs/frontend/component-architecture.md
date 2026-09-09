@@ -1,6 +1,6 @@
 # Component Architecture
 
-Status: Final (Phase 01 baseline)
+Status: Phase 00 architectural plan — see [components.md](components.md) for the as-built Phase 02 inventory (concrete component list, variants, and the file-naming/comment gotchas discovered while implementing). This document remains useful for the *reasoning* behind the approach; components.md is the reference for what actually exists.
 Audience: Engineers implementing the reusable UI component inventory.
 
 Related documents:

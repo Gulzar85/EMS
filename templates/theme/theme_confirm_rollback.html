@@ -1,0 +1,22 @@
+{% extends "base/app.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-md">
+  <c-card title="Roll back {{ theme.name }}">
+    <p class="mb-4 text-sm text-secondary">
+      Choose a previously published version to make live again. This does not delete anything —
+      it only changes which published version is active.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div class="mt-4 flex gap-2">
+        <c-button type="submit" variant="primary">Roll back</c-button>
+        <c-button variant="secondary" href="{% url 'theme:detail' theme.public_id %}">Cancel</c-button>
+      </div>
+    </form>
+  </c-card>
+</div>
+{% endblock %}

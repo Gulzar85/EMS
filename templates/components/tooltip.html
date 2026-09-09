@@ -1,0 +1,20 @@
+{% cotton:vars text="" position="top" class="" %}
+{# Simple, no viewport-collision detection — a deliberate simplification, see docs/frontend/components.md. #}
+<span
+  x-data="{ show: false }"
+  @mouseenter="show = true"
+  @mouseleave="show = false"
+  @focus="show = true"
+  @blur="show = false"
+  class="relative inline-block {{ class }}"
+>
+  <span tabindex="0">{{ slot }}</span>
+  <span
+    x-show="show"
+    x-cloak
+    x-transition
+    role="tooltip"
+    class="pointer-events-none absolute left-1/2 z-40 w-max max-w-xs -translate-x-1/2 rounded-[var(--radius-button)] bg-brand-secondary px-2 py-1 text-xs text-white
+      {% if position == 'bottom' %}top-full mt-2{% else %}bottom-full mb-2{% endif %}"
+  >{{ text }}</span>
+</span>

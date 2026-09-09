@@ -1,0 +1,147 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}Styleguide — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-8">
+  <div>
+    <h1 class="text-xl font-semibold text-primary">Design system styleguide</h1>
+    <p class="mt-1 text-sm text-secondary">
+      Every reusable component, for reference — see docs/frontend/components.md.
+    </p>
+  </div>
+
+  <c-card title="Buttons">
+    <div class="flex flex-wrap items-center gap-2">
+      <c-button variant="primary">Primary</c-button>
+      <c-button variant="secondary">Secondary</c-button>
+      <c-button variant="danger">Danger</c-button>
+      <c-button variant="primary" href="#">As link</c-button>
+      <c-button variant="secondary" disabled>Disabled</c-button>
+    </div>
+  </c-card>
+
+  <c-card title="Icon buttons">
+    <div class="flex flex-wrap items-center gap-2">
+      <c-icon-button label="Edit">{% icon "pencil" size=16 %}</c-icon-button>
+      <c-icon-button variant="primary" label="Add">{% icon "plus" size=16 %}</c-icon-button>
+      <c-icon-button variant="danger" label="Delete">{% icon "trash-2" size=16 %}</c-icon-button>
+    </div>
+  </c-card>
+
+  <c-card title="Badges">
+    <div class="flex flex-wrap gap-2">
+      <c-badge>Default</c-badge>
+      <c-badge variant="brand">Brand</c-badge>
+      <c-badge variant="success">Success</c-badge>
+      <c-badge variant="warning">Warning</c-badge>
+      <c-badge variant="danger">Danger</c-badge>
+      <c-badge variant="info">Info</c-badge>
+    </div>
+  </c-card>
+
+  <c-card title="Alerts">
+    <div class="space-y-2">
+      <c-alert variant="success">Theme published successfully.</c-alert>
+      <c-alert variant="warning" dismissible="true">This draft has unsaved changes.</c-alert>
+      <c-alert variant="danger">Publish failed — see the error above.</c-alert>
+      <c-alert variant="info">Themes are cached for 24 hours after publish.</c-alert>
+    </div>
+  </c-card>
+
+  <c-card title="Avatars">
+    <div class="flex items-center gap-2">
+      <c-avatar initials="A" size="sm" />
+      <c-avatar initials="EM" size="md" />
+      <c-avatar initials="MC" size="lg" />
+    </div>
+  </c-card>
+
+  <c-card title="Toggle">
+    <div x-data="{ enabled: true }">
+      <c-toggle model="enabled" label="Compact mode" />
+    </div>
+  </c-card>
+
+  <c-card title="Tabs">
+    <c-tabs default="tokens">
+      <div role="tablist" class="mb-4 flex gap-1 border-b border-default">
+        <button type="button" @click="active = 'tokens'" :class="active === 'tokens' ? 'border-brand text-brand' : 'border-transparent text-secondary'" class="border-b-2 px-3 py-2 text-sm font-medium">Tokens</button>
+        <button type="button" @click="active = 'usage'" :class="active === 'usage' ? 'border-brand text-brand' : 'border-transparent text-secondary'" class="border-b-2 px-3 py-2 text-sm font-medium">Usage</button>
+      </div>
+      <div x-show="active === 'tokens'" class="text-sm text-secondary">Token content panel.</div>
+      <div x-show="active === 'usage'" class="text-sm text-secondary">Usage content panel.</div>
+    </c-tabs>
+  </c-card>
+
+  <c-card title="Dropdown">
+    <c-dropdown align="left">
+      <c-slot name="trigger">
+        <c-button variant="secondary">Options {% icon "chevron-down" size=16 %}</c-button>
+      </c-slot>
+      <a href="#" class="block px-3 py-2 text-sm text-primary hover:bg-background">Action one</a>
+      <a href="#" class="block px-3 py-2 text-sm text-primary hover:bg-background">Action two</a>
+    </c-dropdown>
+  </c-card>
+
+  <c-card title="Modal">
+    <div x-data="{ showDemoModal: false }">
+      <c-button variant="secondary" @click="showDemoModal = true">Open modal</c-button>
+      <c-modal open_var="showDemoModal" title="Example modal">
+        <p class="text-sm text-secondary">Focus-trapped, Escape/backdrop-dismissible.</p>
+        <div class="mt-4 flex justify-end gap-2">
+          <c-button variant="secondary" @click="showDemoModal = false">Cancel</c-button>
+          <c-button variant="primary" @click="showDemoModal = false">Confirm</c-button>
+        </div>
+      </c-modal>
+    </div>
+  </c-card>
+
+  <c-card title="Tooltip">
+    <c-tooltip text="Helpful extra context">
+      <span class="cursor-help text-sm text-brand underline decoration-dotted">Hover or focus me</span>
+    </c-tooltip>
+  </c-card>
+
+  <c-card title="Breadcrumb">
+    <c-breadcrumb>
+      <li><a href="{% url 'theme:list' %}" class="hover:underline">Themes</a></li>
+      <li class="text-primary">Styleguide</li>
+    </c-breadcrumb>
+  </c-card>
+
+  <c-card title="Empty state">
+    <c-empty-state icon="palette" title="No themes yet" description="Create your first theme to get started.">
+      <c-button variant="primary">Create theme</c-button>
+    </c-empty-state>
+  </c-card>
+
+  <c-card title="Loading state">
+    <c-loading-state label="Loading themes…" />
+  </c-card>
+
+  <c-card title="Skeleton">
+    <div class="space-y-2">
+      <c-skeleton class="h-4 w-3/4" />
+      <c-skeleton class="h-4 w-1/2" />
+      <c-skeleton class="h-24 w-full" />
+    </div>
+  </c-card>
+
+  <c-card title="Table">
+    <c-table>
+      <thead>
+        <tr><th>Theme</th><th>Status</th><th>Updated</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>McDonald's Pakistan Default</td><td><c-badge variant="success">Active</c-badge></td><td>Today</td></tr>
+        <tr><td>Holiday Promo</td><td><c-badge>Draft</c-badge></td><td>Yesterday</td></tr>
+      </tbody>
+    </c-table>
+  </c-card>
+
+  <c-card title="Sample composition">
+    {% include "theme/partials/preview_sample.html" %}
+  </c-card>
+</div>
+{% endblock %}

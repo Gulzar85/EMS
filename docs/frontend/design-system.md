@@ -1,119 +1,96 @@
 # Design System
 
-Status: Final (Phase 01 baseline)
+Status: **Implemented (Phase 02)**
 Audience: Engineers and designers implementing UI for the EMS.
 
 Related documents:
 - [Frontend Architecture](../architecture/frontend-architecture.md)
 - [Theme Architecture](../architecture/theme-architecture.md)
 - [Theme System — implementation mechanics](theme-system.md)
-- [Component Architecture](component-architecture.md)
+- [Component Architecture](components.md)
 
-This document describes the **design tokens** and **visual language** of the EMS. All token values shown are the seeded defaults (see [theme-system.md](theme-system.md) §6) and are runtime-configurable per [theme-architecture.md](../architecture/theme-architecture.md) — nothing here is hardcoded in templates as a literal value; everything is referenced via CSS custom properties.
+This document describes the **design tokens** and **visual language** of the EMS as actually implemented. All values below are the seeded defaults (`apps/theme/migrations/0002_seed_default_theme.py`) and are runtime-configurable through Theme Studio — nothing here is hardcoded in templates as a literal value; components use the semantic utility classes only.
 
 ---
 
-## 1. Design Tokens Reference
+## 1. Design tokens reference
 
-### 1.1 Color roles and semantic meaning
+### 1.1 Color roles
 
-Colors are defined as **roles**, not raw values, so templates never hardcode a hex code — they use the role, and the role's actual value is theme-controlled.
+| Role | Utility class | CSS variable | Theme Studio field(s) | Notes |
+|---|---|---|---|---|
+| Brand / primary action | `bg-brand`, `text-brand` | `--color-brand` | `color_brand_light` / `_dark` | Primary buttons, active nav item, focus rings |
+| Brand hover | `bg-brand-hover` | `--color-brand-hover` | `color_brand_hover_*` | Button `:hover` |
+| Brand secondary | `bg-brand-secondary` | `--color-brand-secondary` | `color_brand_secondary_*` | Secondary brand accent |
+| Brand accent | `bg-brand-accent` | `--color-brand-accent` | `color_brand_accent_*` | Decorative accents |
+| Background | `bg-background` | `--color-background` | `color_background_*` | `<body>` background |
+| Surface | `bg-surface` | `--color-surface` | `color_surface_*` | Cards, modals, tables, dropdowns |
+| Default text | `text-primary` | `--color-primary` | `color_text_primary_*` | Main body/heading text |
+| Secondary text | `text-secondary` | `--color-secondary` | `color_text_secondary_*` | Helper text, timestamps, metadata |
+| Default border | `border-default` | `--color-default` | `color_border_default_*` | Table dividers, input/card borders |
+| Success | `bg-success`, `text-success` | `--color-success` | `color_success_*` | Success alerts, "Active" badges |
+| Warning | `bg-warning`, `text-warning` | `--color-warning` | `color_warning_*` | Pending states, expiring items |
+| Danger | `bg-danger`, `text-danger` | `--color-danger` | `color_danger_*` | Destructive actions, validation errors |
+| Info | `bg-info`, `text-info` | `--color-info` | `color_info_*` | Informational alerts, "Draft" badges |
 
-| Role | Variable | Semantic meaning | Typical usage |
+**Naming note** (a real conflict found while implementing, not a design choice made lightly): Tailwind v4 auto-generates `bg-`/`text-`/`border-` utilities from every `--color-{name}` theme variable. "Primary" (a brand color, Phase 00's term) and "Text primary" (default text color) can't both claim the word "primary" as a class name. `text-primary`/`border-default` were given the short names because Phase 01's own spec asked for them literally; the brand palette lives under `--color-brand-*` instead. Full explanation: the comment block at the top of `static/src/css/app.css`.
+
+Every color role stores **both** a `light` and a `dark` hex value in the same `ThemeVersion.tokens` entry — see [theme-system.md](theme-system.md) §3.
+
+### 1.2 Typography
+
+| Token | CSS variable | Theme Studio field | Notes |
 |---|---|---|---|
-| Primary | `--color-primary` | The brand/action color | Primary buttons, active nav item, links, focus rings |
-| Primary hover | `--color-primary-hover` | Hover/active state of primary | Button `:hover` |
-| Secondary | `--color-secondary` | Secondary brand accent | Secondary buttons, highlights |
-| Accent | `--color-accent` | Tertiary emphasis color | Callouts, decorative accents |
-| Background | `--color-background` | Page background | `<body>` background |
-| Surface | `--color-surface` | Elevated container background | Cards, modals, tables, dropdowns |
-| Text primary | `--color-text-primary` | Main body/heading text | Default text color |
-| Text secondary | `--color-text-secondary` | De-emphasized text | Helper text, timestamps, metadata |
-| Border | `--color-border` | Dividers and outlines | Table row dividers, input borders, card borders |
-| Success | `--color-success` | Positive state | Success alerts, "Active" badges |
-| Warning | `--color-warning` | Caution state | Pending approvals, expiring documents |
-| Danger | `--color-danger` | Destructive/error state | Delete buttons, validation errors, "Terminated" badges |
-| Info | `--color-info` | Neutral informational state | Informational alerts, "Draft" badges |
+| Font family | `--font-sans` | `font_family` | Applied via Tailwind's `font-sans` (the default `font-family` for the whole app) |
+| Base font size | `--font-size-base` | `font_size_base` | `16px` default |
 
-Every role above carries **both** a light and a dark value in `ThemeConfiguration` (see §2).
+Only these two are currently theme-editable. A heading scale / weight scale is not implemented — headings use Tailwind's static `text-lg font-semibold` etc. utility classes directly, not a derived token, since no product requirement has asked for a configurable type scale yet (see [theme-development.md](../development/theme-development.md) on adding one).
 
-### 1.2 Typography scale
+### 1.3 Radius
 
-| Token | Variable | Notes |
-|---|---|---|
-| Font family | `--font-family-base` | Applied to `<body>`; a monospace fallback (`--font-family-mono`) is used only for IDs/codes/employee numbers |
-| Base size | `--font-size-base` | `1rem` equivalent for body text |
-| Heading scale | `--font-scale-ratio` | A modular ratio used to derive `--font-size-h1` … `--font-size-h6` from the base size, so the whole scale moves together when an admin adjusts one control |
-| Weights | `--font-weight-normal` / `--font-weight-medium` / `--font-weight-bold` | Used consistently — body text at normal, labels/table headers at medium, headings at bold |
-| Line height | `--line-height-base` | Applied globally; dense components (tables in compact mode) may use a tighter computed value |
+| Token | CSS variable | Theme Studio field | Used by |
+|---|---|---|---|
+| Small | `--radius-sm` | `radius_sm` | Badges, small inline elements |
+| Medium | `--radius-md` | `radius_md` | — |
+| Large | `--radius-lg` | `radius_lg` | — |
 
-### 1.3 Spacing / density scale
+Separately, three **static** (not theme-editable) radius tokens exist in `app.css` for structural component shapes: `--radius-button`, `--radius-card`, `--radius-input`. These are deliberately not in the token schema — they're a code-level design decision (how rounded a button *shape* is), not a brand color/typography knob an admin adjusts. Promoting them into the schema is possible later if a real need appears (see [theme-development.md](../development/theme-development.md)).
 
-Spacing is expressed as multiples of a single `--spacing-unit` token rather than ad hoc pixel values, so the "Compact mode" toggle (§3) can rescale the entire application's density from one admin control:
+### 1.4 Layout (static, not theme-editable)
 
-| Density | `--spacing-unit` | Effect |
-|---|---|---|
-| Comfortable (default) | `0.25rem` | Generous padding, taller table rows, standard form field height |
-| Compact | `0.1875rem` | Tighter padding, shorter table rows — useful for HR/Ops users scanning large employee lists |
-
-Tailwind spacing utilities used in components (`p-4`, `gap-2`, etc.) are **not** replaced by the variable directly (Tailwind's own spacing scale is used for structural layout, since it's already themeable enough via fixed classes); `--spacing-unit` specifically drives the handful of density-sensitive components (table row height, form field height) that are declared with `padding: calc(var(--spacing-unit) * N)` in the component layer.
-
-### 1.4 Elevation / shadow scale
-
-| Token | Variable | Usage |
-|---|---|---|
-| Small | `--shadow-sm` | Inputs, badges on hover |
-| Medium | `--shadow-md` | Cards, dropdowns |
-| Large | `--shadow-lg` | Modals, command palette, popovers |
-
-### 1.5 Radius scale
-
-| Token | Variable | Usage |
-|---|---|---|
-| Button radius | `--radius-button` | Buttons, button-like controls |
-| Card radius | `--radius-card` | Cards, stat cards, panels |
-| Input radius | `--radius-input` | Text inputs, selects, date pickers |
-| Badge radius | `--radius-badge` | Badges/pills (defaults to fully rounded) |
+`--sidebar-width-expanded`, `--sidebar-width-collapsed`, `--navbar-height` are fixed in `app.css`. No product requirement has asked for these to be admin-configurable; they stay static until one does.
 
 ---
 
-## 2. Light / Dark / System Handling
+## 2. Light / Dark / System — precisely how resolution works
 
-1. **Every color token has two stored values**: a light value and a dark value, both fields on `ThemeConfiguration` (e.g. `color_primary_light`, `color_primary_dark`).
-2. **`ThemeService`** renders `/theme.css` with:
-   - A `:root { --color-primary: <light value>; ... }` block (applies by default).
-   - A `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --color-primary: <dark value>; ... } }` block, which applies automatically when the OS/browser is in dark mode, **unless** an explicit light override is present.
-   - A `:root[data-theme="dark"] { --color-primary: <dark value>; ... }` block, which applies whenever the page has been explicitly switched to dark, **regardless of OS preference**.
-3. **Precedence, in order**:
-   1. Explicit user/admin choice (`data-theme="light"` or `data-theme="dark"` set on `<html>`, persisted e.g. in a cookie or user profile field) — always wins.
-   2. `prefers-color-scheme` media query (System mode, the default when no explicit choice has been made).
-   3. The light values as the ultimate fallback (base `:root`, no media query, no data attribute).
-4. A small inline script in `base.html` (run before first paint, to avoid a flash of the wrong theme) reads the persisted preference and sets `data-theme` on `<html>` synchronously; this script only ever toggles an attribute — it never computes or hardcodes color values, which continue to come from `/theme.css`.
-5. **Appearance mode is itself a `ThemeConfiguration`-adjacent setting** (`Light` / `Dark` / `System`), configurable at the application default level; a signed-in user may additionally override it for themselves, which is the "explicit override" referenced above.
+1. Every color token stores a `light` and `dark` hex value.
+2. `render_theme_css()` ([theme-system.md](theme-system.md) §4) emits three CSS blocks: a base `:root` (light values), `@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { ... } }` (dark values, applies automatically under OS dark mode), and `:root[data-theme="dark"] { ... }` (dark values, applies whenever `data-theme="dark"` is explicitly set, regardless of OS preference).
+3. **Resolution precedence**, server-side, no JavaScript required for it:
+   1. An authenticated user's explicit `light`/`dark` `UserThemePreference` — rendered directly as `<html data-theme="...">` by `apps/theme/context_processors.py:appearance()`, present before any byte of the response body.
+   2. Anonymous user, or preference is `system`/unset — `data-theme` is omitted; the browser's own `prefers-color-scheme` media query resolves it natively.
+4. The navbar's appearance switcher is the only place JS is involved: it sets `document.documentElement.dataset.theme` immediately for instant feedback, then persists the choice via a background `fetch()` POST (see [theme-system.md](theme-system.md) §8).
 
 ---
 
-## 3. Visual Language Principles
+## 3. Visual language principles
 
-EMS is used by HR, Operations, Area/Regional Management, Finance/Payroll, Training, and employees, frequently against **large datasets** (hundreds of restaurants, thousands of employees). The visual language prioritizes clarity and scan-ability over decoration.
-
-### Information density
-
-- **Comfortable mode** (default): generous row height and padding, suited to occasional users and touch-adjacent laptop use.
-- **Compact mode**: reduced row height/padding (via `--spacing-unit`, §1.3) for power users (HR/Payroll staff working through long employee or payroll-run lists all day) who benefit from seeing more rows per screen. Compact mode is a per-user or admin-default toggle, not a separate template — the same `templates/components/data_table.html` renders both densities purely through the spacing token.
+EMS is used by HR, Operations, Area/Regional Management, Finance/Payroll, Training, and employees, frequently against large datasets. The visual language prioritizes clarity and scan-ability over decoration.
 
 ### Accessible contrast
 
-- **Target: WCAG 2.1 AA** contrast ratios (4.5:1 for normal text, 3:1 for large text/UI components) for all default token combinations (text-on-background, text-on-surface, text-on-primary). This is stated as a **goal/assumption pending final brand color sign-off** — because the actual production color values are an admin-configurable, brand-owned decision, AA compliance must be re-verified whenever the real McDonald's Pakistan brand palette is entered into Theme Studio, and the Theme Studio UX should surface a contrast warning when an admin picks a combination that fails AA (see [theme-system.md](theme-system.md) §5).
-- Semantic colors (success/warning/danger/info) are never the *only* signal for state — an icon or text label always accompanies color-coded badges/alerts, for colorblind users.
+Target: WCAG 2.1 AA (4.5:1 normal text, 3:1 large text/UI). Stated as a **goal pending brand sign-off** — the seeded default colors are placeholders (see `apps/theme/migrations/0002_seed_default_theme.py`), and AA compliance needs re-verification once real McDonald's Pakistan brand values are entered into Theme Studio. No automated contrast checker is built into Theme Studio yet (a documented gap, not a silent omission — see Known Issues in the Phase 02 report).
+
+Semantic colors (success/warning/danger/info) are never the only signal — badges/alerts always carry an icon or text label too.
 
 ### Consistent iconography
 
-- **Lucide Icons** is the single icon set used everywhere (sidebar nav, buttons, status indicators, empty states). No mixing of icon libraries, so visual weight and stroke style stay consistent.
-- Icons are rendered inline (SVG) so they can be styled with `currentColor` and pick up theme text/semantic colors automatically, rather than being colored image assets.
-- Icon sizing follows a small fixed set (`16px` inline-with-text, `20px` standalone buttons, `24px` nav/section headers) rather than arbitrary per-instance sizes.
+Lucide icons only, vendored as static SVGs (`apps/core/static/core/icons/`, see [Component Architecture](components.md)), rendered inline so they inherit `currentColor` and pick up theme colors automatically. No other icon set is mixed in.
 
 ### Enterprise tone
 
-- Minimal ornamentation: flat surfaces, subtle shadows (per the elevation scale, §1.4) rather than heavy drop shadows or gradients, consistent with a functional back-office HR tool rather than a consumer product.
-- Motion is limited to functional transitions (dropdown/modal open-close, HTMX swap fade) — no decorative animation, to keep the tool feeling fast and serious for daily operational use.
+Flat surfaces, minimal shadows, functional-only motion (dropdown/modal transitions, htmx swap states) — no decorative animation.
+
+### Density
+
+Not implemented as a configurable token in Phase 02 (no `--spacing-unit`/compact-mode toggle exists yet). Tailwind's standard spacing utilities are used directly in component templates. A future compact-mode token, if needed, would follow the same pattern as radius: add it to the schema, add a CSS variable, add a Theme Studio field.

@@ -1,0 +1,24 @@
+{% load icons %}
+{% cotton:vars page_obj="" class="" %}
+{# Wraps a Django Page object — presentation only, no custom pagination logic. #}
+{% if page_obj.paginator.num_pages > 1 %}
+<nav aria-label="Pagination" class="flex items-center justify-between gap-4 {{ class }}">
+  <p class="text-sm text-secondary">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
+  <div class="flex gap-1">
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}" class="flex h-8 w-8 items-center justify-center rounded-[var(--radius-button)] text-secondary hover:bg-background" aria-label="Previous page">
+      {% icon "chevron-left" size=16 %}
+    </a>
+    {% else %}
+    <span class="flex h-8 w-8 items-center justify-center rounded-[var(--radius-button)] text-secondary opacity-40" aria-hidden="true">{% icon "chevron-left" size=16 %}</span>
+    {% endif %}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}" class="flex h-8 w-8 items-center justify-center rounded-[var(--radius-button)] text-secondary hover:bg-background" aria-label="Next page">
+      {% icon "chevron-right" size=16 %}
+    </a>
+    {% else %}
+    <span class="flex h-8 w-8 items-center justify-center rounded-[var(--radius-button)] text-secondary opacity-40" aria-hidden="true">{% icon "chevron-right" size=16 %}</span>
+    {% endif %}
+  </div>
+</nav>
+{% endif %}

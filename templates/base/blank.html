@@ -1,10 +1,11 @@
-{% load static %}<!DOCTYPE html>
-<html lang="en" class="no-js">
+{% load static theme_tags %}<!DOCTYPE html>
+<html lang="en" class="no-js"{% if resolved_appearance %} data-theme="{{ resolved_appearance }}"{% endif %}>
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{% block title %}EMS{% endblock %}</title>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% theme_css_url %}">
 </head>
 <body class="bg-background text-primary min-h-screen">
   {% block content %}{% endblock %}
@@ -12,7 +13,10 @@
   <script src="{% static 'js/vendor/htmx.min.js' %}"></script>
   <script src="{% static 'js/htmx/index.js' %}"></script>
   <script src="{% static 'js/alpine/index.js' %}"></script>
+  <script src="{% static 'js/components/appearance.js' %}"></script>
   <script src="{% static 'js/app.js' %}"></script>
+  <script src="{% static 'js/vendor/alpine-focus.min.js' %}" defer></script>
   <script src="{% static 'js/vendor/alpine.min.js' %}" defer></script>
+  {% block extra_js %}{% endblock %}
 </body>
 </html>

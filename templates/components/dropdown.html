@@ -1,0 +1,16 @@
+{% cotton:vars align="right" class="" %}
+<div x-data="dropdown" class="relative inline-block {{ class }}">
+  <div @click="toggle()" @click.outside="close()" @keydown.escape.window="close()">
+    {{ trigger }}
+  </div>
+  <div
+    x-show="open"
+    x-cloak
+    x-transition
+    x-trap="open"
+    class="absolute {% if align == 'right' %}right-0{% else %}left-0{% endif %} top-full z-30 mt-2 w-56 rounded-[var(--radius-card)] border border-default bg-surface py-1 shadow-lg"
+    role="menu"
+  >
+    {{ slot }}
+  </div>
+</div>

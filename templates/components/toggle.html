@@ -1,0 +1,15 @@
+{% cotton:vars model="" label="" class="" %}
+{# Client-side-only UI toggle — actual form checkboxes go through crispy-tailwind instead. #}
+<label class="flex cursor-pointer items-center gap-2 {{ class }}">
+  <button
+    type="button"
+    role="switch"
+    x-bind:aria-checked="{{ model }}.toString()"
+    @click="{{ model }} = !{{ model }}"
+    :class="{{ model }} ? 'bg-brand' : 'bg-default'"
+    class="relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand"
+  >
+    <span :class="{{ model }} ? 'translate-x-4' : 'translate-x-1'" class="inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform"></span>
+  </button>
+  {% if label %}<span class="text-sm text-primary">{{ label }}</span>{% endif %}
+</label>

@@ -8,6 +8,16 @@
     {% include "layouts/_navbar.html" %}
 
     <main id="main-content" class="flex-1 p-4 lg:p-6">
+      {% if messages %}
+      <div class="mb-4 space-y-2">
+        {% for message in messages %}
+        <c-alert
+          dismissible="true"
+          variant="{% if message.tags == 'error' %}danger{% elif message.tags == 'success' %}success{% elif message.tags == 'warning' %}warning{% else %}info{% endif %}"
+        >{{ message }}</c-alert>
+        {% endfor %}
+      </div>
+      {% endif %}
       {% block page_content %}{% endblock %}
     </main>
   </div>

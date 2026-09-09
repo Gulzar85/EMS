@@ -1,0 +1,23 @@
+{# Shared between Theme Studio's live-preview pane and the Styleguide page — see theme-studio.js for how tokens cascade in. #}
+<div class="space-y-4">
+  <div>
+    <h3 class="text-lg font-semibold text-primary">Sample heading</h3>
+    <p class="text-sm text-secondary">Body text and secondary text with the current tokens.</p>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <c-button variant="primary">Primary</c-button>
+    <c-button variant="secondary">Secondary</c-button>
+    <c-button variant="danger">Danger</c-button>
+  </div>
+  <div class="flex flex-wrap gap-2">
+    <c-badge variant="brand">Brand</c-badge>
+    <c-badge variant="success">Success</c-badge>
+    <c-badge variant="warning">Warning</c-badge>
+    <c-badge variant="danger">Danger</c-badge>
+    <c-badge variant="info">Info</c-badge>
+  </div>
+  <c-alert variant="info">This is an informational alert.</c-alert>
+  <c-card title="Nested card" class="!p-4">
+    <p class="text-sm text-secondary">Cards use the surface color and border token.</p>
+  </c-card>
+</div>

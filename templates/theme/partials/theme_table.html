@@ -1,0 +1,35 @@
+{% if themes %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Status</th>
+      <th>Versions</th>
+      <th>Updated</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for theme in themes %}
+    <tr>
+      <td class="font-medium">{{ theme.name }}</td>
+      <td>
+        {% if theme.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}
+      </td>
+      <td>{{ theme.version_count }}</td>
+      <td>{{ theme.updated_at|date:"M j, Y" }}</td>
+      <td class="text-right">
+        <a href="{% url 'theme:detail' theme.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="palette" title="No themes yet" description="Create your first theme to start customizing the EMS design system.">
+  {% if perms.theme.add_theme %}
+  <c-button variant="primary" href="{% url 'theme:create' %}">Create theme</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

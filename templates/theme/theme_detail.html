@@ -1,0 +1,93 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ theme.name }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'theme:list' %}" class="hover:underline">Themes</a></li>
+    <li class="text-primary">{{ theme.name }}</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-semibold text-primary">{{ theme.name }}</h1>
+        {% if theme.is_active %}<c-badge variant="success">Active</c-badge>{% endif %}
+      </div>
+      {% if theme.description %}<p class="mt-1 text-sm text-secondary">{{ theme.description }}</p>{% endif %}
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if perms.theme.change_theme %}
+      <c-button variant="secondary" href="{% url 'theme:update' theme.public_id %}">{% icon "pencil" size=16 %} Edit</c-button>
+      <c-button variant="primary" href="{% url 'theme:studio' theme.public_id %}">{% icon "palette" size=16 %} Open Studio</c-button>
+      {% endif %}
+      {% if perms.theme.add_theme %}
+      <c-button variant="secondary" href="{% url 'theme:duplicate' theme.public_id %}">{% icon "copy" size=16 %} Duplicate</c-button>
+      {% endif %}
+      {% if not theme.is_active and perms.theme.delete_theme %}
+      <c-button variant="danger" href="{% url 'theme:delete' theme.public_id %}">{% icon "trash-2" size=16 %} Delete</c-button>
+      {% endif %}
+    </div>
+  </div>
+
+  <c-card title="Draft">
+    {% if draft %}
+    <p class="text-sm text-secondary">
+      Version {{ draft.version_number }} — last saved {{ draft.updated_at|date:"M j, Y H:i" }}.
+    </p>
+    <div class="mt-3 flex gap-2">
+      <c-button variant="secondary" href="{% url 'theme:preview' theme.public_id %}">{% icon "eye" size=16 %} Preview CSS</c-button>
+      {% if perms.theme.publish_theme %}
+      <c-button variant="primary" href="{% url 'theme:publish' theme.public_id %}">{% icon "upload" size=16 %} Publish</c-button>
+      {% endif %}
+    </div>
+    {% else %}
+    <p class="text-sm text-secondary">No unpublished draft — every change has been published.</p>
+    {% endif %}
+  </c-card>
+
+  <c-card title="Version history">
+    {% if versions %}
+    <c-table>
+      <thead>
+        <tr>
+          <th>Version</th>
+          <th>Status</th>
+          <th>Published</th>
+          <th class="text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for version in versions %}
+        <tr>
+          <td class="font-medium">v{{ version.version_number }}</td>
+          <td>
+            {% if theme.active_version_id == version.id %}<c-badge variant="brand">Live</c-badge>
+            {% elif version.status == "published" %}<c-badge variant="success">Published</c-badge>
+            {% else %}<c-badge>Draft</c-badge>{% endif %}
+          </td>
+          <td>{% if version.published_at %}{{ version.published_at|date:"M j, Y H:i" }}{% else %}—{% endif %}</td>
+          <td class="text-right">
+            {% if version.status == "published" and theme.active_version_id != version.id and perms.theme.rollback_theme %}
+            <a href="{% url 'theme:rollback' theme.public_id %}?target_version={{ version.pk }}" class="text-sm font-medium text-brand hover:underline">Roll back to this</a>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="history" title="No versions yet" />
+    {% endif %}
+  </c-card>
+
+  {% if not theme.is_active and theme.active_version_id and perms.theme.activate_theme %}
+  <c-alert variant="info">
+    This theme isn't currently active.
+    <a href="{% url 'theme:activate' theme.public_id %}" class="font-medium underline">Activate it</a>
+    to make it the site's live theme.
+  </c-alert>
+  {% endif %}
+</div>
+{% endblock %}

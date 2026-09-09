@@ -1,0 +1,27 @@
+{% extends "base/app.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-md">
+  <c-card title="Publish {{ theme.name }}">
+    {% if draft %}
+    <p class="mb-4 text-sm text-secondary">
+      This finalizes draft v{{ draft.version_number }} — it becomes immutable and this theme
+      becomes the site's active theme immediately.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div class="mt-4 flex gap-2">
+        <c-button type="submit" variant="primary">{% load icons %}{% icon "upload" size=16 %} Publish</c-button>
+        <c-button variant="secondary" href="{% url 'theme:detail' theme.public_id %}">Cancel</c-button>
+      </div>
+    </form>
+    {% else %}
+    <c-alert variant="warning">There is no draft to publish.</c-alert>
+    <c-button variant="secondary" class="mt-4" href="{% url 'theme:detail' theme.public_id %}">Back</c-button>
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

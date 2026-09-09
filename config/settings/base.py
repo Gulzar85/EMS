@@ -26,6 +26,7 @@ CSRF_TRUSTED_ORIGINS = env.list("CSRF_TRUSTED_ORIGINS", default=[])
 # ---------------------------------------------------------------------------
 
 DJANGO_APPS = [
+    "jazzmin",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -44,6 +45,7 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "apps.core",
     "apps.accounts",
+    "apps.audit",
     "apps.theme",
 ]
 
@@ -75,6 +77,8 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.navigation",
+                "apps.core.context_processors.crispy_theme",
+                "apps.theme.context_processors.appearance",
             ],
         },
     },

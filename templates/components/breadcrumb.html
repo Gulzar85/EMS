@@ -1,0 +1,7 @@
+{% cotton:vars class="" %}
+{# Usage: <c-breadcrumb><li><a href="...">Themes</a></li><li class="text-primary">Detail</li></c-breadcrumb> #}
+<nav aria-label="Breadcrumb" class="{{ class }}">
+  <ol class="flex flex-wrap items-center gap-2 text-sm text-secondary [&>li:not(:last-child)::after]:ml-2 [&>li:not(:last-child)::after]:content-['/'] [&>li]:flex [&>li]:items-center">
+    {{ slot }}
+  </ol>
+</nav>

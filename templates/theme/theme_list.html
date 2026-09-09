@@ -1,0 +1,23 @@
+{% extends "base/app.html" %}
+
+{% block title %}Themes — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <form method="get" class="flex-1 max-w-xs" hx-get="{% url 'theme:list' %}" hx-target="#theme-table" hx-swap="outerHTML" hx-trigger="input changed delay:300ms from:#id_q, search from:#id_q">
+      <label for="id_q" class="sr-only">Search themes</label>
+      <input type="search" id="id_q" name="q" value="{{ q }}" placeholder="Search themes…"
+             class="block w-full rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+    </form>
+    {% if perms.theme.add_theme %}
+    <c-button variant="primary" href="{% url 'theme:create' %}">
+      {% load icons %}{% icon "plus" size=16 %} New theme
+    </c-button>
+    {% endif %}
+  </div>
+
+  <div id="theme-table">
+    {% include "theme/partials/theme_table.html" %}
+  </div>
+</div>
+{% endblock %}

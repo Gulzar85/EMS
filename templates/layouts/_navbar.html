@@ -13,38 +13,63 @@
     {% include "layouts/_breadcrumbs.html" %}
   </div>
 
-  <div class="relative flex items-center gap-2" x-data="dropdown">
-    <button
-      type="button"
-      @click="toggle()"
-      @click.outside="close()"
-      @keydown.escape.window="close()"
-      :aria-expanded="open"
-      aria-haspopup="true"
-      class="flex items-center gap-2 rounded-[var(--radius-button)] px-2 py-1.5 text-sm text-primary hover:bg-background"
-    >
-      <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
-        {{ request.user.get_short_name|slice:":1"|upper }}
-      </span>
-      <span class="hidden sm:inline">{{ request.user.get_full_name }}</span>
-      {% icon "chevron-down" size=16 class_name="text-secondary" %}
-    </button>
+  <c-dropdown align="right">
+    <c-slot name="trigger">
+      <button
+        type="button"
+        :aria-expanded="open"
+        aria-haspopup="true"
+        class="flex items-center gap-2 rounded-[var(--radius-button)] px-2 py-1.5 text-sm text-primary hover:bg-background"
+      >
+        <span class="flex h-7 w-7 items-center justify-center rounded-full bg-brand text-xs font-semibold text-white">
+          {{ request.user.get_short_name|slice:":1"|upper }}
+        </span>
+        <span class="hidden sm:inline">{{ request.user.get_full_name }}</span>
+        {% icon "chevron-down" size=16 class_name="text-secondary" %}
+      </button>
+    </c-slot>
+
+    <div class="border-b border-default px-3 py-2 text-xs text-secondary">{{ request.user.email }}</div>
 
     <div
-      x-show="open"
-      x-cloak
-      x-transition
-      class="absolute right-0 top-full mt-2 w-48 rounded-[var(--radius-card)] border border-default bg-surface py-1 shadow-lg"
-      role="menu"
+      class="border-b border-default px-3 py-2"
+      x-data="appearanceSwitcher('{{ request.user.theme_preference.appearance|default:"system" }}')"
     >
-      <div class="border-b border-default px-3 py-2 text-xs text-secondary">{{ request.user.email }}</div>
-      <form method="post" action="{% url 'accounts:logout' %}">
-        {% csrf_token %}
-        <button type="submit" role="menuitem" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-primary hover:bg-background">
-          {% icon "log-out" size=16 %}
-          Sign out
-        </button>
-      </form>
+      <p class="mb-2 text-xs font-medium text-secondary">Appearance</p>
+      <div class="flex gap-1" role="group" aria-label="Appearance">
+        <button
+          type="button"
+          @click="setAppearance('light')"
+          :aria-pressed="current === 'light'"
+          :class="current === 'light' ? 'bg-brand text-white' : 'text-secondary hover:bg-background'"
+          class="flex flex-1 items-center justify-center rounded-[var(--radius-button)] p-1.5"
+          aria-label="Light"
+        >{% icon "sun" size=16 %}</button>
+        <button
+          type="button"
+          @click="setAppearance('dark')"
+          :aria-pressed="current === 'dark'"
+          :class="current === 'dark' ? 'bg-brand text-white' : 'text-secondary hover:bg-background'"
+          class="flex flex-1 items-center justify-center rounded-[var(--radius-button)] p-1.5"
+          aria-label="Dark"
+        >{% icon "moon" size=16 %}</button>
+        <button
+          type="button"
+          @click="setAppearance('system')"
+          :aria-pressed="current === 'system'"
+          :class="current === 'system' ? 'bg-brand text-white' : 'text-secondary hover:bg-background'"
+          class="flex flex-1 items-center justify-center rounded-[var(--radius-button)] p-1.5"
+          aria-label="System"
+        >{% icon "monitor" size=16 %}</button>
+      </div>
     </div>
-  </div>
+
+    <form method="post" action="{% url 'accounts:logout' %}">
+      {% csrf_token %}
+      <button type="submit" role="menuitem" class="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-primary hover:bg-background">
+        {% icon "log-out" size=16 %}
+        Sign out
+      </button>
+    </form>
+  </c-dropdown>
 </header>

@@ -1,224 +1,136 @@
 # Theme System — Implementation Mechanics
 
-Status: Final (Phase 01 baseline)
-Audience: Engineers implementing the theme system in code.
+Status: **Implemented (Phase 02)** — supersedes the Phase 00/01 speculative design that lived in this file (a flat `ThemeConfiguration` model with ~40 concrete fields). Building the real thing surfaced a better shape: versioned tokens, not a giant flat model. See [ADR-006](../adr/ADR-006-dynamic-theme-architecture.md) for the original rationale, still valid; this document describes what was actually built.
 
 Related documents:
-- [Theme Architecture](../architecture/theme-architecture.md) (the "why" — read this first)
-- [Design System](design-system.md) (the token reference and light/dark rules)
-- [Frontend Architecture](../architecture/frontend-architecture.md)
-
-This document is the deep technical reference for **building** the theme system described conceptually in [theme-architecture.md](../architecture/theme-architecture.md). No code exists yet (this is a greenfield spec) — the shapes below are the intended design for Phase 01 implementation.
+- [Theme Architecture](../architecture/theme-architecture.md) — the "why"
+- [Design System](design-system.md) — the token reference and light/dark rules
+- [Theme Security](theme-security.md) — the CSS-injection defense in detail
+- [Theme Development](../development/theme-development.md) — how to extend the schema
 
 ---
 
-## 1. `ThemeConfiguration` Model — Field List
+## 1. Why versioned tokens instead of one flat model
 
-One model holds the entire theme. For Phase 01 (single active theme, no multi-tenant/multi-brand requirement yet), a single active row is assumed, enforced by convention (e.g. a `is_active` boolean with a uniqueness constraint, or simply `pk=1`); the shape still supports multiple rows later (e.g. per-brand theming) without a schema change.
+The Phase 00 plan sketched a single `ThemeConfiguration` row with ~40 concrete typed fields (`color_primary_light`, `sidebar_width_rem`, ...). Building Theme Studio's actual requirements — draft/publish/rollback, immutable history, "who published this and why" — made a **versioned** model the right fit instead: `Theme` (metadata + which version is live) → `ThemeVersion` (an immutable, timestamped snapshot of the full token set once published). A flat model has no natural place to keep old values around for rollback without inventing a second history table; the version table *is* the history.
 
-Common, well-known tokens get **concrete fields** (typed, validated, editable as normal form fields in Theme Studio). Rare/future tokens go in a single JSONField `extra` so the system can grow without a migration for every new knob — `ThemeService` reads `extra` last, layering it over the concrete fields so an `extra` key can also override a known token.
+## 2. Models (`apps/theme/models.py`)
 
 ```python
-class ThemeConfiguration(models.Model):
-    name = models.CharField(max_length=100, default="Default Theme")
-    is_active = models.BooleanField(default=True)
-    appearance_mode = models.CharField(
-        max_length=10,
-        choices=[("light", "Light"), ("dark", "Dark"), ("system", "System")],
-        default="system",
-    )
+class Theme(TimeStampedModel, PublicIDModel):
+    name = CharField(max_length=100, unique=True)
+    description = TextField(blank=True)
+    is_active = BooleanField(default=False)
+    active_version = FK("ThemeVersion", null=True, on_delete=SET_NULL, related_name="+")
+    created_by = FK(User, null=True, on_delete=SET_NULL, related_name="+")
 
-    # --- Colors (light / dark pairs) ---
-    color_primary_light = models.CharField(max_length=7, default="#DA291C")
-    color_primary_dark = models.CharField(max_length=7, default="#E5493C")
-    color_primary_hover_light = models.CharField(max_length=7, default="#B52117")
-    color_primary_hover_dark = models.CharField(max_length=7, default="#F16659")
-    color_secondary_light = models.CharField(max_length=7, default="#FFC72C")
-    color_secondary_dark = models.CharField(max_length=7, default="#FFD35C")
-    color_accent_light = models.CharField(max_length=7, default="#27251F")
-    color_accent_dark = models.CharField(max_length=7, default="#4A473F")
-    color_background_light = models.CharField(max_length=7, default="#F7F7F5")
-    color_background_dark = models.CharField(max_length=7, default="#15161A")
-    color_surface_light = models.CharField(max_length=7, default="#FFFFFF")
-    color_surface_dark = models.CharField(max_length=7, default="#1E2025")
-    color_text_primary_light = models.CharField(max_length=7, default="#1A1A1A")
-    color_text_primary_dark = models.CharField(max_length=7, default="#F2F2F2")
-    color_text_secondary_light = models.CharField(max_length=7, default="#5A5A5A")
-    color_text_secondary_dark = models.CharField(max_length=7, default="#A6A6A6")
-    color_border_light = models.CharField(max_length=7, default="#E2E2E0")
-    color_border_dark = models.CharField(max_length=7, default="#33353B")
-    color_success_light = models.CharField(max_length=7, default="#1E8E3E")
-    color_success_dark = models.CharField(max_length=7, default="#4CBB6E")
-    color_warning_light = models.CharField(max_length=7, default="#B8860B")
-    color_warning_dark = models.CharField(max_length=7, default="#E0AC3C")
-    color_danger_light = models.CharField(max_length=7, default="#C62828")
-    color_danger_dark = models.CharField(max_length=7, default="#E5534B")
-    color_info_light = models.CharField(max_length=7, default="#1565C0")
-    color_info_dark = models.CharField(max_length=7, default="#5B9BE0")
+    class Meta:
+        constraints = [
+            UniqueConstraint(fields=["is_active"], condition=Q(is_active=True), name="theme_single_active"),
+        ]
+        permissions = [
+            ("publish_theme", "Can publish a theme version"),
+            ("rollback_theme", "Can roll back a theme"),
+            ("activate_theme", "Can activate a theme"),
+        ]
 
-    # --- Typography ---
-    font_family_base = models.CharField(
-        max_length=200, default='"Inter", ui-sans-serif, system-ui, sans-serif'
-    )
-    font_size_base_rem = models.DecimalField(max_digits=4, decimal_places=3, default=0.9375)
-    font_scale_ratio = models.DecimalField(max_digits=3, decimal_places=2, default=1.20)
-    font_weight_normal = models.PositiveSmallIntegerField(default=400)
-    font_weight_medium = models.PositiveSmallIntegerField(default=500)
-    font_weight_bold = models.PositiveSmallIntegerField(default=700)
-    line_height_base = models.DecimalField(max_digits=3, decimal_places=2, default=1.50)
+class ThemeVersion(TimeStampedModel, PublicIDModel):
+    theme = FK(Theme, on_delete=CASCADE, related_name="versions")
+    version_number = PositiveIntegerField()
+    status = CharField(choices=[("draft", "Draft"), ("published", "Published")], default="draft")
+    schema_version = PositiveIntegerField(default=1)
+    tokens = JSONField()
+    published_at = DateTimeField(null=True)
+    published_by = FK(User, null=True, on_delete=SET_NULL, related_name="+")
 
-    # --- Layout ---
-    sidebar_width_rem = models.DecimalField(max_digits=4, decimal_places=2, default=16.00)
-    sidebar_position = models.CharField(
-        max_length=5, choices=[("left", "Left"), ("right", "Right")], default="left"
-    )
-    navbar_height_rem = models.DecimalField(max_digits=4, decimal_places=2, default=3.50)
-    content_max_width_rem = models.DecimalField(max_digits=5, decimal_places=2, default=90.00)
-    density = models.CharField(
-        max_length=12,
-        choices=[("compact", "Compact"), ("comfortable", "Comfortable")],
-        default="comfortable",
-    )
-
-    # --- Components ---
-    radius_button_rem = models.DecimalField(max_digits=4, decimal_places=3, default=0.375)
-    radius_card_rem = models.DecimalField(max_digits=4, decimal_places=3, default=0.500)
-    radius_input_rem = models.DecimalField(max_digits=4, decimal_places=3, default=0.375)
-    radius_badge_rem = models.DecimalField(max_digits=4, decimal_places=3, default=999)  # pill
-    shadow_sm = models.CharField(max_length=200, default="0 1px 2px rgba(0,0,0,0.05)")
-    shadow_md = models.CharField(max_length=200, default="0 4px 6px rgba(0,0,0,0.07)")
-    shadow_lg = models.CharField(max_length=200, default="0 10px 20px rgba(0,0,0,0.10)")
-    border_width_default_px = models.PositiveSmallIntegerField(default=1)
-
-    # --- Escape hatch for future/rare tokens ---
-    extra = models.JSONField(default=dict, blank=True)
-
-    version = models.PositiveIntegerField(
-        default=1
-    )  # bumped on every save; drives /theme.css cache-busting
-    updated_at = models.DateTimeField(auto_now=True)
-    updated_by = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, on_delete=models.SET_NULL)
+    class Meta:
+        constraints = [UniqueConstraint(fields=["theme", "version_number"], name="uniq_theme_version_number")]
 
     def save(self, *args, **kwargs):
-        self.version = (self.version or 0) + 1
-        super().save(*args, **kwargs)
+        # Refuses to change status/tokens on an already-PUBLISHED row —
+        # published versions are immutable even via Django admin.
+        ...
+
+class UserThemePreference(TimeStampedModel):
+    user = OneToOneField(User, primary_key=True, on_delete=CASCADE, related_name="theme_preference")
+    appearance = CharField(choices=[("light", ...), ("dark", ...), ("system", ...)], default="system")
 ```
 
-Notes:
-- Color fields store `#RRGGBB` hex strings; the Theme Studio form uses native/Alpine-enhanced color pickers.
-- Numeric layout/typography fields are stored as plain decimals in a known unit (rem/px) rather than raw CSS strings, so Theme Studio can render them as sliders/number inputs with validation (e.g. min/max sidebar width) — `ThemeService` appends the unit when rendering CSS.
-- `extra` is a flat `{css_variable_name: value}` dict for tokens that don't yet have a dedicated field (e.g. a newly requested `--color-focus-ring` before it's promoted to a concrete field in a later migration).
+**Concurrency**: exactly one `Theme` may have `is_active=True` — enforced by a Postgres partial unique index, not just application logic, so two admins publishing at once fail safely at the database rather than racing into an inconsistent state. Every service that flips `is_active` or `active_version` also wraps in `transaction.atomic()` with `select_for_update()`, so the common case never even reaches that race.
 
----
+## 3. Token schema (`apps/theme/validation.py`)
 
-## 2. `ThemeService.render_css_variables(theme) -> str`
-
-Responsibility: pure transformation from a `ThemeConfiguration` instance to CSS text. No I/O, no caching, no HTTP concerns — those live in the view (§3).
-
-```python
-class ThemeService:
-    @staticmethod
-    def render_css_variables(theme: "ThemeConfiguration") -> str:
-        """
-        Build the full /theme.css body for a given ThemeConfiguration:
-          - a base :root block using LIGHT values
-          - a `@media (prefers-color-scheme: dark)` block using DARK values,
-            scoped to :root:not([data-theme="light"]) so an explicit light
-            override still wins over OS dark mode
-          - a `:root[data-theme="dark"]` block using DARK values, so an
-            explicit user choice wins unconditionally
-          - `extra` keys layered on top of all three blocks as raw
-            `--name: value;` declarations
-        Returns a single string of valid CSS, ready to serve as text/css.
-        """
+```json
+{
+  "schema_version": 1,
+  "colors": {
+    "brand": {"light": "#DA291C", "dark": "#DA291C"},
+    "brand_hover": {...}, "brand_secondary": {...}, "brand_accent": {...},
+    "background": {...}, "surface": {...},
+    "text_primary": {...}, "text_secondary": {...}, "border_default": {...},
+    "success": {...}, "warning": {...}, "danger": {...}, "info": {...}
+  },
+  "typography": {"font_family": "'Inter', ui-sans-serif, system-ui, sans-serif", "font_size_base": "16px"},
+  "radius": {"sm": "0.375rem", "md": "0.5rem", "lg": "0.75rem"}
+}
 ```
 
-Key responsibilities in full:
-1. Map every concrete field to its CSS variable name (e.g. `color_primary_light` → `--color-primary`, `color_primary_dark` → `--color-primary` under the dark blocks).
-2. Append units where the DB stores bare numbers (e.g. `sidebar_width_rem: 16.00` → `--layout-sidebar-width: 16rem;`).
-3. Derive computed tokens that aren't stored directly but follow from stored ones (e.g. heading font sizes from `font_size_base_rem` × `font_scale_ratio^n`, or `--spacing-unit` from `density`).
-4. Merge `extra` last, so it can add new variables or override any computed/concrete one without a schema change.
-5. Never touches Tailwind, never shells out to Node — this is string building only, safe to run inline in a request/response cycle or a management command.
+Every color stores **both** a `light` and `dark` value in the same key — Phase 01's `app.css` already models dark mode as alternate values of the same CSS variables, so this mirrors that exactly. `validate_theme_tokens()` hand-validates every value against a strict regex (`^#[0-9a-fA-F]{6}$` for colors, an allow-list character class for font family, `^\d+(\.\d+)?(px|rem)$` for sizes) and rejects any top-level or color key outside the known closed set. See [theme-security.md](theme-security.md) for why this is hand-rolled rather than the `jsonschema` package, and exactly what it defends against.
 
-`ThemeService` also exposes `ThemeService.get_active_theme()` which returns the active `ThemeConfiguration` (cached — see §3) or the in-code `DEFAULT_THEME` fallback described in [theme-architecture.md](../architecture/theme-architecture.md) §5 if no row exists.
+To add a new token: add it to `COLOR_TOKENS`/`RADIUS_TOKENS` (or a new section) in `validation.py`, add its CSS variable mapping in `rendering.py`, add the corresponding field(s) in `ThemeStudioForm.__init__`, bump `CURRENT_SCHEMA_VERSION` only if the change isn't backward-compatible with existing published `ThemeVersion` rows. See [theme-development.md](../development/theme-development.md).
 
----
+## 4. Rendering (`apps/theme/rendering.py`)
 
-## 3. The `/theme.css` Django View
+`render_theme_css(tokens: dict) -> str` builds the exact same three-block shape Phase 01 hand-wrote into `app.css`:
 
-```python
-def theme_css(request):
-    theme = ThemeService.get_active_theme()
-    css = ThemeService.render_css_variables(theme)
-    response = HttpResponse(css, content_type="text/css")
-    response["ETag"] = f'"{theme.version}"'
-    if "v" in request.GET:
-        # Versioned URL: content for this version never changes.
-        response["Cache-Control"] = "public, max-age=31536000, immutable"
-    else:
-        # Bare URL fallback: short cache, always eventually fresh.
-        response["Cache-Control"] = "public, max-age=60"
-    return response
+```css
+:root { --color-brand: #DA291C; ... }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --color-background: #111827; ... }
+}
+:root[data-theme="dark"] { --color-background: #111827; ... }
 ```
 
-- `ThemeService.get_active_theme()` wraps the DB read in Django's cache framework (`cache.get_or_set("active_theme", ..., timeout=None)`), invalidated explicitly whenever `ThemeConfiguration.save()` runs (e.g. via a `post_save` signal calling `cache.delete("active_theme")`), so normal request traffic never hits the database for every page load.
-- The view performs no writes and requires no special permission to **read** — it's a public, cacheable static-like asset. Only the Theme Studio **save** path (below) is permission-gated.
+Every value is re-validated against the same regexes immediately before string interpolation — defense-in-depth, in case some future code path ever writes `tokens` without going through the service layer (e.g. a data migration or a bulk-admin script).
 
-### Template tag
+## 5. Caching (`ThemeCacheService` in `apps/theme/services.py`)
+
+Cache-aside on one key, `theme:active:tokens`, storing `{"version_id": ..., "tokens": ...}` — bundled together so the `/theme.css` view and the `{% theme_css_url %}` cache-busting tag (§6) share one cache read instead of two, and can never disagree with each other mid-request. Uses Django's configured cache (Redis if `REDIS_URL` is set, else local memory — Phase 01's existing setting, no new infrastructure). Every service call that changes which version is live calls `transaction.on_commit(ThemeCacheService.invalidate)` — `on_commit`, not an immediate `cache.delete()`, so a rolled-back transaction never leaves a stale-but-invalidated cache.
+
+## 6. The `/theme.css` endpoint (`apps/theme/views.py: theme_css_view`)
+
+A plain function view (the one deliberate FBV in this app — a raw `text/css` response with no template, no form, no auth, matching Phase 02's own guidance to use an FBV for "very specialized behavior that would become unnatural as a CBV"). Public and unauthenticated (needed by the login page itself), `Cache-Control: public, max-age=3600`, and always reachable at the bare `/theme.css` — the actual cache-busting happens via the query string:
 
 ```python
 @register.simple_tag
-def theme_css_url():
-    theme = ThemeService.get_active_theme()
-    return f"{reverse('theme_css')}?v={theme.version}"
+def theme_css_url() -> str:
+    version_id = ThemeCacheService.get_active_version_id() or 0
+    return f"{reverse('theme-css')}?v={version_id}"
 ```
 
-Used in `base.html` as:
+`base/blank.html` loads `app.css` first (the hardcoded Tailwind `@theme` defaults), then `{% theme_css_url %}` second, so the cascade lets the dynamic values win over the static fallback — and if no `Theme` is ever published, `/theme.css` simply returns an empty body and the hardcoded defaults keep working, exactly like Phase 01.
 
-```html
-<link rel="stylesheet" href="{% theme_css_url %}">
-```
+## 7. Publish / Rollback / Activate — precisely what each does
 
-Because the tag reads the current `version` on every render, any page rendered after a theme save automatically points at the new versioned URL — no manual cache-busting anywhere else in the codebase.
+- **Publish** (`services.publish_theme`): the theme's current DRAFT `ThemeVersion` is validated, marked `PUBLISHED` (immutable from this point on), and — in the same transaction — becomes both that `Theme`'s `active_version` **and** the site's sole active `Theme` (deactivating whichever theme was previously active). Publish and "go live" are one action; see the Phase 02 plan's judgment call #2 for why.
+- **Rollback** (`services.rollback_theme`): repoints `active_version` to an *older already-published* version of the **same** theme. No new version is created — published rows are immutable, so rollback is purely a pointer change, and the version being rolled back *from* is left untouched (still published, still available to roll forward to again).
+- **Activate** (`services.activate_theme`): switches which *entire Theme* is the site's active one, without publishing anything — for when there's more than one Theme (e.g. a duplicated seasonal theme) and you want to switch back to a previously-published one.
 
----
+All three, plus `create_theme`/`update_draft_tokens`/`duplicate_theme`/`delete_theme`, call `apps.audit.services.record()` inside the same transaction — see [theme-security.md](theme-security.md) for the audit mapping table.
 
-## 4. Permissions
+## 8. Appearance resolution (light/dark/system) — no flash, no JS required for it
 
-- A dedicated permission, `theme.manage_theme` (a custom Django permission on `ThemeConfiguration`), gates the Theme Studio view (both viewing the edit form and saving). This is checked in addition to normal staff/superuser access, so an org can grant "can manage the visual theme" narrowly (e.g. to a Brand/Marketing admin) without granting broader system administration rights.
-- The `/theme.css` read endpoint itself has no permission check — it must be loadable by every authenticated (and, for the login page's own styling, unauthenticated) request.
+Precedence, exactly:
+1. **Authenticated user with an explicit `light`/`dark` preference** — resolved server-side by `apps/theme/context_processors.py:appearance()`, rendered directly as `<html data-theme="light|dark">` in the initial response. Nothing to flash: the correct attribute is present before a single byte of CSS/JS loads.
+2. **Anonymous, or preference is `system`/unset** — `data-theme` is omitted entirely, and the `@media (prefers-color-scheme: dark)` rule already in `app.css` (Phase 01) takes over natively in the browser, zero JavaScript involved.
 
----
+The navbar's appearance switcher (`static/src/js/components/appearance.js`) is the one place real JS matters: clicking Light/Dark/System sets `document.documentElement.dataset.theme` *immediately* (optimistic UI, no waiting on a round trip) and fires a background `fetch()` POST to `/preferences/appearance/` to persist it — deliberately plain `fetch`, not htmx, since there's no HTML to swap, only a value to save.
 
-## 5. Theme Studio UX Flow
+## 9. Theme Studio's live preview — genuinely zero DB writes per keystroke
 
-1. **Entry**: an admin with `theme.manage_theme` opens `/admin-tools/theme-studio/` (a dedicated view, not necessarily the Django admin app, so it can offer a richer live-preview layout).
-2. **Form**: a single Django form (grouped into fieldsets matching §4 of [theme-architecture.md](../architecture/theme-architecture.md): Colors, Typography, Layout, Components, Appearance), rendered with crispy-tailwind like any other form in the system — Theme Studio's own form is styled by the theme it's editing, which is a deliberate "eat your own dog food" check.
-3. **Live preview (no save required)**: the form page includes a preview pane (a panel showing sample components — a button, a card, a badge, a small table) rendered via the same `components/*` templates used app-wide. Every field change (color picker `input`/`change` event, slider `input` event) triggers an HTMX request (`hx-post` to a `theme_preview` view, debounced client-side via Alpine, e.g. `hx-trigger="change delay:200ms"`) that:
-   - Takes the **current in-browser form values** (not yet saved),
-   - Runs them through `ThemeService.render_css_variables()` against a transient, unsaved `ThemeConfiguration(**posted_values)` instance (never calling `.save()`),
-   - Returns a `<style>` block (or a fresh `/theme-preview.css`-style inline response) scoped to `#theme-preview-pane`, plus the same sample-components partial, so the admin sees an accurate, live rendering of buttons/cards/badges/tables under the *candidate* theme before committing.
-   - This preview path deliberately reuses `ThemeService` (never a separate rendering codepath), so what the admin previews is guaranteed to match what `/theme.css` will produce once saved.
-4. **Save**: a distinct "Save" action performs the real `ThemeConfiguration.save()` (persisting values and bumping `version` per the model's overridden `save()`), invalidates the `active_theme` cache key, and redirects back to Theme Studio with a success Alert. From this point, every page in the app (not just the preview pane) reflects the new theme on next load, because `{% theme_css_url %}` now resolves to the new version.
-5. **Contrast safety net**: when rendering the live preview, the view additionally computes a basic WCAG contrast ratio for a few key pairs (text-primary on background, text-on-primary on primary) and surfaces a Warning-styled inline note in the preview pane if a pair falls below AA — informational only, does not block saving, since brand requirements may sometimes need to override the tool's own recommendation.
+Every token field in `ThemeStudioForm` carries a `data-preview-*` attribute (`data-preview-color`, `data-preview-mode`, `data-preview-radius`, `data-preview-typography`) set in `forms.py`. `static/src/js/components/theme-studio.js` listens for `input` events on the whole form (event delegation — one listener, not one per field) and, for each change, calls `preview.style.setProperty(cssVarName, value)` on the preview pane element **only** — never on `:root`. This means:
+- Nothing is saved to Postgres until "Save draft" is actually submitted.
+- The rest of the admin's own UI (navbar, sidebar) stays on the *real* active theme the whole time — only the scoped preview pane reflects the unsaved edit, because CSS custom properties inherit downward from whichever element they're set on.
+- The preview pane's own light/dark toggle just changes which token suffix (`_light`/`_dark`) the same listener applies — no server round-trip for that either.
 
----
-
-## 6. Seeding Defaults — Never Unstyled
-
-The defaults tabulated in [theme-architecture.md](../architecture/theme-architecture.md) §4 ship as a **data migration** (preferred, since it runs automatically and exactly once as part of `manage.py migrate` in every environment):
-
-```python
-def seed_default_theme(apps, schema_editor):
-    ThemeConfiguration = apps.get_model("theming", "ThemeConfiguration")
-    if not ThemeConfiguration.objects.exists():
-        ThemeConfiguration.objects.create(name="Default Theme", is_active=True)
-        # all other fields take their model-level defaults
-
-
-class Migration(migrations.Migration):
-    dependencies = [("theming", "0001_initial")]
-    operations = [migrations.RunPython(seed_default_theme, migrations.RunPython.noop)]
-```
-
-A fixture (`theming/fixtures/default_theme.json`) is kept as an alternative/documentation-friendly form of the same seed data for local dev resets (`loaddata`), but the data migration is what guarantees production and every fresh environment always has a valid, active `ThemeConfiguration` row immediately after deploy — combined with `ThemeService`'s in-code `DEFAULT_THEME` fallback (§2, and [theme-architecture.md](../architecture/theme-architecture.md) §5) for the narrow edge case of `/theme.css` being requested before migrations have run, the application never renders unstyled.
+The preview pane's content (`templates/theme/partials/preview_sample.html`) is the exact same partial reused on `/settings/themes/styleguide/`, so Theme Studio's preview is never a fake mockup.

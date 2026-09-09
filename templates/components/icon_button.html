@@ -1,0 +1,10 @@
+{% cotton:vars variant="secondary" type="button" label="" class="" %}
+<button
+  type="{{ type }}"
+  {{ attrs }}
+  aria-label="{{ label }}"
+  class="inline-flex h-9 w-9 items-center justify-center rounded-[var(--radius-button)] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand disabled:opacity-50 disabled:pointer-events-none
+    {% if variant == 'primary' %}bg-brand text-white hover:bg-brand-hover
+    {% elif variant == 'danger' %}bg-danger text-white hover:opacity-90
+    {% else %}text-secondary hover:bg-background{% endif %} {{ class }}"
+>{{ slot }}</button>

@@ -1,0 +1,5 @@
+{% cotton:vars default="" class="" %}
+{# Provides shared x-data state only — buttons/panels use plain Alpine directives directly (active === 'key'), see docs/frontend/components.md for a full example. #}
+<div x-data="{ active: '{{ default }}' }" class="{{ class }}">
+  {{ slot }}
+</div>

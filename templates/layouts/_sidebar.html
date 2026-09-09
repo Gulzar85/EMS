@@ -13,11 +13,22 @@
 
   <nav class="flex-1 space-y-1 overflow-y-auto p-3" aria-label="Primary">
     <a href="{% url 'core:home' %}"
-       aria-current="page"
-       class="flex items-center gap-3 rounded-[var(--radius-button)] bg-brand/10 px-3 py-2 text-sm font-medium text-brand">
+       {% if request.resolver_match.url_name == "home" %}aria-current="page"{% endif %}
+       class="flex items-center gap-3 rounded-[var(--radius-button)] px-3 py-2 text-sm font-medium
+         {% if request.resolver_match.url_name == "home" %}bg-brand/10 text-brand{% else %}text-secondary hover:bg-background{% endif %}">
       {% icon "home" size=18 %}
       <span x-show="!sidebarCollapsed">Dashboard</span>
     </a>
+
+    {% if perms.theme.view_theme %}
+    <a href="{% url 'theme:list' %}"
+       {% if request.resolver_match.app_name == "theme" %}aria-current="page"{% endif %}
+       class="flex items-center gap-3 rounded-[var(--radius-button)] px-3 py-2 text-sm font-medium
+         {% if request.resolver_match.app_name == "theme" %}bg-brand/10 text-brand{% else %}text-secondary hover:bg-background{% endif %}">
+      {% icon "pencil" size=18 %}
+      <span x-show="!sidebarCollapsed">Theme Settings</span>
+    </a>
+    {% endif %}
 
     {% for item in coming_soon_nav %}
     <div class="flex cursor-not-allowed items-center justify-between gap-3 rounded-[var(--radius-button)] px-3 py-2 text-sm text-secondary" title="Coming soon">
