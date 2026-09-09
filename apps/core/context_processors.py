@@ -11,7 +11,6 @@ from crispy_tailwind.tailwind import CSSContainer
 from django.http import HttpRequest
 
 COMING_SOON_NAV = [
-    {"label": "Employees", "icon": "users"},
     {"label": "Leave", "icon": "calendar-days"},
     {"label": "Attendance", "icon": "clock"},
     {"label": "Compensation", "icon": "banknote"},

@@ -1,0 +1,21 @@
+{% extends "base/app.html" %}
+{% load crispy_forms_tags icons %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-md">
+  <c-card title="Link User Account — {{ employee.display_name }}">
+    <p class="mb-4 text-sm text-secondary">
+      This lets {{ employee.display_name }} log into EMS using the selected account.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div class="mt-4 flex gap-2">
+        <c-button type="submit" variant="primary">{% icon "user" size=16 %} Link Account</c-button>
+        <c-button variant="secondary" href="{% url 'employees:employee-detail' employee.public_id %}">Cancel</c-button>
+      </div>
+    </form>
+  </c-card>
+</div>
+{% endblock %}

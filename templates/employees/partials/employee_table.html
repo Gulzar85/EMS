@@ -1,0 +1,46 @@
+{% if employees %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Employee #</th>
+      <th>Name</th>
+      <th>Position</th>
+      <th>Department</th>
+      <th>Status</th>
+      <th>Manager</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for employee in employees %}
+    <tr>
+      <td class="font-medium">{{ employee.employee_number }}</td>
+      <td>{{ employee.display_name }}</td>
+      <td>{{ employee.current_position.title|default:"—" }}</td>
+      <td>{{ employee.current_position.department.name|default:"—" }}</td>
+      <td>
+        {% with status=employee.employment.status %}
+        {% if status == "active" %}<c-badge variant="success">Active</c-badge>
+        {% elif status == "probation" %}<c-badge variant="warning">Probation</c-badge>
+        {% elif status == "on_leave" %}<c-badge variant="warning">On Leave</c-badge>
+        {% elif status == "suspended" %}<c-badge variant="danger">Suspended</c-badge>
+        {% elif status == "resigned" or status == "terminated" or status == "retired" %}<c-badge>{{ employee.employment.get_status_display }}</c-badge>
+        {% else %}<c-badge>Draft</c-badge>{% endif %}
+        {% endwith %}
+      </td>
+      <td>{{ employee.current_manager.display_name|default:"—" }}</td>
+      <td class="text-right">
+        <a href="{% url 'employees:employee-detail' employee.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="users" title="No employees found" description="Create your first employee record to start building the roster.">
+  {% if perms.employees.add_employee %}
+  <c-button variant="primary" href="{% url 'employees:employee-create' %}">Create employee</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

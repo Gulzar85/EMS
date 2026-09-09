@@ -48,6 +48,7 @@ LOCAL_APPS = [
     "apps.audit",
     "apps.theme",
     "apps.organization",
+    "apps.employees",
 ]
 
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
@@ -171,6 +172,14 @@ MEDIA_URL = "media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# ---------------------------------------------------------------------------
+# Employees (apps.employees) — see docs/adr/ADR-021-employee-number-generation.md
+# ---------------------------------------------------------------------------
+
+EMPLOYEE_NUMBER_PREFIX = env("EMPLOYEE_NUMBER_PREFIX", default="EMP-")
+EMPLOYEE_NUMBER_PADDING = env.int("EMPLOYEE_NUMBER_PADDING", default=6)
+EMPLOYEE_PROFILE_PHOTO_MAX_BYTES = 2 * 1024 * 1024  # 2 MB
 
 # ---------------------------------------------------------------------------
 # Forms

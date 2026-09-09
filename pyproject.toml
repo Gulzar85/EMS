@@ -11,6 +11,7 @@ dependencies = [
     "crispy-tailwind>=1.0",
     "django-cotton>=1.4",
     "django-axes>=7.0",
+    "pillow>=11.0",
 ]
 
 [project.optional-dependencies]

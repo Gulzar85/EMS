@@ -1,0 +1,59 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}Employees — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-6xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'employees:dashboard' %}" class="hover:underline">Employees</a></li>
+    <li class="text-primary">Roster</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-end justify-between gap-4">
+    <form method="get" class="flex flex-wrap items-end gap-3" hx-get="{% url 'employees:employee-list' %}" hx-target="#employee-table" hx-swap="outerHTML" hx-trigger="input changed delay:300ms from:#id_q, search from:#id_q, change from:#id_status, change from:#id_employment_type, change from:#id_department">
+      <div>
+        <label for="id_q" class="sr-only">Search employees</label>
+        <input type="search" id="id_q" name="q" value="{{ q }}" placeholder="Search by number, name, email…"
+               class="block w-64 rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+      </div>
+      <div>
+        <label for="id_status" class="sr-only">Status</label>
+        <select id="id_status" name="status"
+                class="block rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+          <option value="">All statuses</option>
+          {% for value, label in status_choices %}
+          <option value="{{ value }}" {% if status == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_employment_type" class="sr-only">Employment type</label>
+        <select id="id_employment_type" name="employment_type"
+                class="block rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+          <option value="">All employment types</option>
+          {% for value, label in employment_type_choices %}
+          <option value="{{ value }}" {% if employment_type == value %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div>
+        <label for="id_department" class="sr-only">Department</label>
+        <select id="id_department" name="department"
+                class="block rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+          <option value="">All departments</option>
+          {% for dept in department_choices %}
+          <option value="{{ dept.id }}" {% if department == dept.id|stringformat:"s" %}selected{% endif %}>{{ dept.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </form>
+    {% if perms.employees.add_employee %}
+    <c-button variant="primary" href="{% url 'employees:employee-create' %}">{% icon "plus" size=16 %} New employee</c-button>
+    {% endif %}
+  </div>
+
+  <div id="employee-table">
+    {% include "employees/partials/employee_table.html" %}
+  </div>
+</div>
+{% endblock %}

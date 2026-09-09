@@ -1,0 +1,74 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}Employees — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold text-primary">Employees</h1>
+    <div class="flex gap-2">
+      {% if perms.employees.view_employee %}
+      <c-button variant="secondary" href="{% url 'employees:employee-list' %}">{% icon "users" size=16 %} View roster</c-button>
+      {% endif %}
+      {% if perms.employees.add_employee %}
+      <c-button variant="primary" href="{% url 'employees:employee-create' %}">{% icon "plus" size=16 %} New employee</c-button>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Total Employees</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.total_employees }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Active Employees</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.active_employees }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Inactive Employees</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.inactive_employees }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">New Joiners (30d)</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.new_joiners_30d }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">On Probation</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.on_probation }}</p>
+    </c-card>
+  </div>
+
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-2">
+    <c-card title="By employment type">
+      {% if metrics.by_employment_type %}
+      <dl class="space-y-2 text-sm">
+        {% for type_label, count in metrics.by_employment_type.items %}
+        <div class="flex items-center justify-between">
+          <dt class="text-secondary">{{ type_label|default:"Unspecified" }}</dt>
+          <dd class="font-medium text-primary">{{ count }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+      {% else %}
+      <c-empty-state icon="briefcase" title="No data yet" />
+      {% endif %}
+    </c-card>
+
+    <c-card title="By location">
+      {% if metrics.by_location %}
+      <dl class="space-y-2 text-sm">
+        {% for location_name, count in metrics.by_location.items %}
+        <div class="flex items-center justify-between">
+          <dt class="text-secondary">{{ location_name|default:"Unassigned" }}</dt>
+          <dd class="font-medium text-primary">{{ count }}</dd>
+        </div>
+        {% endfor %}
+      </dl>
+      {% else %}
+      <c-empty-state icon="map-pin" title="No data yet" />
+      {% endif %}
+    </c-card>
+  </div>
+</div>
+{% endblock %}

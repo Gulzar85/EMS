@@ -12,6 +12,7 @@ urlpatterns = [
     path("theme.css", ThemeCSSView.as_view(), name="theme-css"),
     path("settings/themes/", include("apps.theme.urls")),
     path("organization/", include("apps.organization.urls")),
+    path("employees/", include("apps.employees.urls")),
     path("preferences/appearance/", AppearanceUpdateView.as_view(), name="appearance-update"),
 ]
 

@@ -1,0 +1,22 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-md">
+  <c-card title="Delete {{ employee.display_name }}">
+    <c-alert variant="danger">
+      This permanently deletes "{{ employee.display_name }}". Only draft employees (never
+      activated) can be deleted this way — everyone else should be deactivated instead, to
+      preserve their history.
+    </c-alert>
+    <form method="post" class="mt-4">
+      {% csrf_token %}
+      <div class="flex gap-2">
+        <c-button type="submit" variant="danger">{% icon "trash-2" size=16 %} Delete permanently</c-button>
+        <c-button variant="secondary" href="{% url 'employees:employee-detail' employee.public_id %}">Cancel</c-button>
+      </div>
+    </form>
+  </c-card>
+</div>
+{% endblock %}

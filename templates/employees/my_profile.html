@@ -1,0 +1,151 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <h1 class="text-xl font-semibold text-primary">My Profile</h1>
+
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div class="flex items-start gap-4">
+      {% if employee.profile_photo %}
+      <img src="{{ employee.profile_photo.url }}" alt="" class="h-16 w-16 rounded-full object-cover">
+      {% else %}
+      <div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-surface-2)] text-secondary">
+        {% icon "user" size=28 %}
+      </div>
+      {% endif %}
+      <div>
+        <div class="flex items-center gap-2">
+          <h2 class="text-lg font-semibold text-primary">{{ employee.display_name }}</h2>
+          {% with status=employee.employment.status %}
+          {% if status == "active" %}<c-badge variant="success">Active</c-badge>
+          {% elif status == "probation" %}<c-badge variant="warning">Probation</c-badge>
+          {% elif status == "on_leave" %}<c-badge variant="warning">On Leave</c-badge>
+          {% elif status == "suspended" %}<c-badge variant="danger">Suspended</c-badge>
+          {% elif status == "resigned" or status == "terminated" or status == "retired" %}<c-badge>{{ employee.employment.get_status_display }}</c-badge>
+          {% else %}<c-badge>Draft</c-badge>{% endif %}
+          {% endwith %}
+        </div>
+        <p class="mt-1 text-sm text-secondary">
+          {{ employee.employee_number }}
+          {% if employee.current_position %} · {{ employee.current_position.title }}{% endif %}
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <c-card title="Personal information">
+    <dl class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+      <div><dt class="text-secondary">Full legal name</dt><dd class="text-primary">{{ employee.full_legal_name }}</dd></div>
+      <div><dt class="text-secondary">Preferred name</dt><dd class="text-primary">{{ employee.preferred_name|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Date of birth</dt><dd class="text-primary">{{ employee.date_of_birth|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Gender</dt><dd class="text-primary">{{ employee.get_gender_display|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Nationality</dt><dd class="text-primary">{{ employee.nationality|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Marital status</dt><dd class="text-primary">{{ employee.get_marital_status_display|default:"—" }}</dd></div>
+    </dl>
+  </c-card>
+
+  <c-card title="Contact information">
+    <dl class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+      <div><dt class="text-secondary">{% icon "mail" size=14 class_name="inline -mt-1" %} Work email</dt><dd class="text-primary">{{ employee.contact.work_email|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">{% icon "mail" size=14 class_name="inline -mt-1" %} Personal email</dt><dd class="text-primary">{{ employee.contact.personal_email|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">{% icon "phone" size=14 class_name="inline -mt-1" %} Mobile</dt><dd class="text-primary">{{ employee.contact.mobile_number|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">{% icon "phone" size=14 class_name="inline -mt-1" %} Phone</dt><dd class="text-primary">{{ employee.contact.phone_number|default:"—" }}</dd></div>
+      <div class="sm:col-span-2">
+        <dt class="text-secondary">{% icon "map-pin" size=14 class_name="inline -mt-1" %} Address</dt>
+        <dd class="text-primary">
+          {{ employee.contact.address_line_1 }} {{ employee.contact.address_line_2 }}
+          {% if employee.contact.city %}, {{ employee.contact.city }}{% endif %}
+          {% if employee.contact.province %}, {{ employee.contact.province }}{% endif %}
+          {% if employee.contact.postal_code %} {{ employee.contact.postal_code }}{% endif %}
+          {% if employee.contact.country %}, {{ employee.contact.country }}{% endif %}
+        </dd>
+      </div>
+    </dl>
+  </c-card>
+
+  <c-card title="Current position">
+    {% if employee.current_position %}
+    <dl class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+      <div><dt class="text-secondary">Position</dt><dd class="text-primary">{{ employee.current_position.title }} ({{ employee.current_position.code }})</dd></div>
+      <div><dt class="text-secondary">Job</dt><dd class="text-primary">{{ employee.current_position.job.title }}</dd></div>
+      <div><dt class="text-secondary">Department</dt><dd class="text-primary">{{ employee.current_position.department.name|default:"—" }}</dd></div>
+    </dl>
+    {% else %}
+    <c-empty-state icon="briefcase" title="No current position" description="You have no active primary position assignment." />
+    {% endif %}
+  </c-card>
+
+  <c-card title="Manager">
+    {% if employee.current_manager %}
+    <p class="text-sm text-primary">
+      {{ employee.current_manager.display_name }}
+      — {{ employee.current_manager.current_position.title|default:"—" }}
+    </p>
+    {% else %}
+    <c-empty-state icon="users" title="No manager assigned" />
+    {% endif %}
+  </c-card>
+
+  <c-card title="Emergency contacts">
+    {% if emergency_contacts %}
+    <c-table>
+      <thead><tr><th>Name</th><th>Relationship</th><th>Mobile</th><th>Primary</th></tr></thead>
+      <tbody>
+        {% for contact in emergency_contacts %}
+        <tr>
+          <td class="font-medium">{{ contact.name }}</td>
+          <td>{{ contact.get_relationship_display }}</td>
+          <td>{{ contact.mobile_number }}</td>
+          <td>{% if contact.is_primary %}<c-badge variant="success">Primary</c-badge>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="shield" title="No emergency contacts on file" />
+    {% endif %}
+  </c-card>
+
+  <c-card title="Current assignments">
+    {% if current_assignments %}
+    <c-table>
+      <thead><tr><th>Position</th><th>Type</th><th>Primary</th><th>Start date</th></tr></thead>
+      <tbody>
+        {% for assignment in current_assignments %}
+        <tr>
+          <td>{{ assignment.position.title }}</td>
+          <td>{{ assignment.get_assignment_type_display }}</td>
+          <td>{% if assignment.is_primary %}<c-badge variant="success">Primary</c-badge>{% endif %}</td>
+          <td>{{ assignment.start_date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="briefcase" title="No active assignments" />
+    {% endif %}
+  </c-card>
+
+  <c-card title="Recent assignment history">
+    {% if assignment_history %}
+    <c-table>
+      <thead><tr><th>Position</th><th>Type</th><th>Start</th><th>End</th></tr></thead>
+      <tbody>
+        {% for assignment in assignment_history %}
+        <tr>
+          <td>{{ assignment.position.title }}</td>
+          <td>{{ assignment.get_assignment_type_display }}</td>
+          <td>{{ assignment.start_date }}</td>
+          <td>{{ assignment.end_date|default:"Ongoing" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="history" title="No assignment history yet" />
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

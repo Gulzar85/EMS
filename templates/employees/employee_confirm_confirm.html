@@ -1,0 +1,22 @@
+{% extends "base/app.html" %}
+{% load crispy_forms_tags icons %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-md">
+  <c-card title="Confirm {{ employee.display_name }}">
+    <p class="mb-4 text-sm text-secondary">
+      This ends {{ employee.display_name }}'s probation period and moves them to Active status,
+      recording today's date as their confirmation date.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div class="mt-4 flex gap-2">
+        <c-button type="submit" variant="primary">{% icon "circle-check" size=16 %} Confirm</c-button>
+        <c-button variant="secondary" href="{% url 'employees:employee-detail' employee.public_id %}">Cancel</c-button>
+      </div>
+    </form>
+  </c-card>
+</div>
+{% endblock %}

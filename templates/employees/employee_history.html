@@ -1,0 +1,81 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}History — {{ employee.display_name }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'employees:dashboard' %}" class="hover:underline">Employees</a></li>
+    <li><a href="{% url 'employees:employee-detail' employee.public_id %}" class="hover:underline">{{ employee.display_name }}</a></li>
+    <li class="text-primary">History</li>
+  </c-breadcrumb>
+
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-primary">History — {{ employee.display_name }}</h1>
+    <c-button variant="secondary" href="{% url 'employees:employee-detail' employee.public_id %}">Back to profile</c-button>
+  </div>
+
+  <c-card title="Position assignment history">
+    {% if assignment_history %}
+    <c-table>
+      <thead><tr><th>Position</th><th>Type</th><th>Primary</th><th>Start</th><th>End</th><th>Reason</th></tr></thead>
+      <tbody>
+        {% for assignment in assignment_history %}
+        <tr>
+          <td>{{ assignment.position.title }}</td>
+          <td>{{ assignment.get_assignment_type_display }}</td>
+          <td>{% if assignment.is_primary %}<c-badge variant="success">Primary</c-badge>{% endif %}</td>
+          <td>{{ assignment.start_date }}</td>
+          <td>{{ assignment.end_date|default:"Ongoing" }}</td>
+          <td>{{ assignment.reason|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="history" title="No position assignment history" />
+    {% endif %}
+  </c-card>
+
+  <c-card title="Manager history">
+    {% if manager_history %}
+    <c-table>
+      <thead><tr><th>Manager</th><th>Relationship</th><th>Primary</th><th>Start</th><th>End</th></tr></thead>
+      <tbody>
+        {% for assignment in manager_history %}
+        <tr>
+          <td>{{ assignment.manager.display_name }}</td>
+          <td>{{ assignment.get_relationship_type_display }}</td>
+          <td>{% if assignment.is_primary %}<c-badge variant="success">Primary</c-badge>{% endif %}</td>
+          <td>{{ assignment.start_date }}</td>
+          <td>{{ assignment.end_date|default:"Ongoing" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="users" title="No manager history" />
+    {% endif %}
+  </c-card>
+
+  <c-card title="Audit trail">
+    {% if audit_events %}
+    <c-table>
+      <thead><tr><th>Event</th><th>Actor</th><th>When</th><th>Reason</th></tr></thead>
+      <tbody>
+        {% for event in audit_events %}
+        <tr>
+          <td class="font-medium">{{ event.action }}</td>
+          <td>{{ event.actor|default:"System" }}</td>
+          <td>{{ event.timestamp }}</td>
+          <td>{{ event.reason|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="history" title="No audit events yet" />
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

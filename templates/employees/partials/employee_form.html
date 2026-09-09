@@ -1,0 +1,14 @@
+{% load crispy_forms_tags %}
+<form
+  id="employee-form"
+  method="post"
+  enctype="multipart/form-data"
+  action="{% if employee %}{% url 'employees:employee-update' employee.public_id %}{% else %}{% url 'employees:employee-create' %}{% endif %}"
+>
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if employee %}{% url 'employees:employee-detail' employee.public_id %}{% else %}{% url 'employees:employee-list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>
