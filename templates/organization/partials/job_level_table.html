@@ -1,0 +1,33 @@
+{% if job_levels %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Code</th>
+      <th>Rank</th>
+      <th>Status</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job_level in job_levels %}
+    <tr>
+      <td class="font-medium">{{ job_level.name }}</td>
+      <td>{{ job_level.code }}</td>
+      <td>{{ job_level.rank }}</td>
+      <td>{% if job_level.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+      <td class="text-right">
+        <a href="{% url 'organization:job-level-detail' job_level.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="layers" title="No job levels yet" description="Create your first job level to start ranking jobs.">
+  {% if perms.organization.add_joblevel %}
+  <c-button variant="primary" href="{% url 'organization:job-level-create' %}">Create job level</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

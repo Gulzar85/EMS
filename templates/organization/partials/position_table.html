@@ -1,0 +1,46 @@
+{% if positions %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Code</th>
+      <th>Title</th>
+      <th>Job</th>
+      <th>Department / Unit</th>
+      <th>Status</th>
+      <th>Headcount</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for position in positions %}
+    <tr>
+      <td class="font-medium">{{ position.code }}</td>
+      <td>{{ position.title }}</td>
+      <td>{{ position.job.title|default:"—" }}</td>
+      <td>
+        {% if position.department %}{{ position.department.name }}
+        {% elif position.organization_unit %}{{ position.organization_unit.name }}
+        {% else %}—{% endif %}
+      </td>
+      <td>
+        {% if position.status == "active" %}<c-badge variant="success">Active</c-badge>
+        {% elif position.status == "frozen" %}<c-badge variant="warning">Frozen</c-badge>
+        {% elif position.status == "closed" %}<c-badge variant="danger">Closed</c-badge>
+        {% else %}<c-badge>Draft</c-badge>{% endif %}
+      </td>
+      <td>{{ position.headcount_limit }}</td>
+      <td class="text-right">
+        <a href="{% url 'organization:position-detail' position.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="briefcase" title="No positions yet" description="Create your first position to start building headcount.">
+  {% if perms.organization.add_position %}
+  <c-button variant="primary" href="{% url 'organization:position-create' %}">Create position</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

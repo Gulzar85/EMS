@@ -12,7 +12,6 @@ from django.http import HttpRequest
 
 COMING_SOON_NAV = [
     {"label": "Employees", "icon": "users"},
-    {"label": "Organization", "icon": "building-2"},
     {"label": "Leave", "icon": "calendar-days"},
     {"label": "Attendance", "icon": "clock"},
     {"label": "Compensation", "icon": "banknote"},

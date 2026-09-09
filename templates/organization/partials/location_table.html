@@ -1,0 +1,37 @@
+{% if locations %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Code</th>
+      <th>Type</th>
+      <th>Organization Unit</th>
+      <th>City</th>
+      <th>Status</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for location in locations %}
+    <tr>
+      <td class="font-medium">{{ location.name }}</td>
+      <td>{{ location.code }}</td>
+      <td>{{ location.get_location_type_display }}</td>
+      <td>{{ location.organization_unit.name|default:"—" }}</td>
+      <td>{{ location.city|default:"—" }}</td>
+      <td>{% if location.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+      <td class="text-right">
+        <a href="{% url 'organization:location-detail' location.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="map" title="No locations yet" description="Create your first location to get started.">
+  {% if perms.organization.add_location %}
+  <c-button variant="primary" href="{% url 'organization:location-create' %}">Create location</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

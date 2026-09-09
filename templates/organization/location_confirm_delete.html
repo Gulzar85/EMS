@@ -1,0 +1,21 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-md">
+  <c-card title="Delete {{ location.name }}">
+    <c-alert variant="danger">
+      This permanently deletes "{{ location.name }}". If it still has departments or positions
+      referencing it, the deletion will be refused — deactivate it instead.
+    </c-alert>
+    <form method="post" class="mt-4">
+      {% csrf_token %}
+      <div class="flex gap-2">
+        <c-button type="submit" variant="danger">{% icon "trash-2" size=16 %} Delete permanently</c-button>
+        <c-button variant="secondary" href="{% url 'organization:location-detail' location.public_id %}">Cancel</c-button>
+      </div>
+    </form>
+  </c-card>
+</div>
+{% endblock %}

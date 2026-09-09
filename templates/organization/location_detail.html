@@ -1,0 +1,81 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ location.name }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'organization:dashboard' %}" class="hover:underline">Organization</a></li>
+    <li><a href="{% url 'organization:location-list' %}" class="hover:underline">Locations</a></li>
+    <li class="text-primary">{{ location.name }}</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-semibold text-primary">{{ location.name }}</h1>
+        <c-badge variant="brand">{{ location.get_location_type_display }}</c-badge>
+        {% if not location.is_active %}<c-badge>Inactive</c-badge>{% endif %}
+      </div>
+      <p class="mt-1 text-sm text-secondary">Code: {{ location.code }} · Unit: {{ location.organization_unit.name }}</p>
+    </div>
+    <div class="flex gap-2">
+      {% if perms.organization.change_location %}
+      <c-button variant="secondary" href="{% url 'organization:location-update' location.public_id %}">{% icon "pencil" size=16 %} Edit</c-button>
+      {% endif %}
+      {% if perms.organization.delete_location %}
+      <c-button variant="danger" href="{% url 'organization:location-delete' location.public_id %}">{% icon "trash-2" size=16 %} Delete</c-button>
+      {% endif %}
+    </div>
+  </div>
+
+  <c-card title="Contact & address">
+    <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-secondary">Address</dt><dd class="text-primary">{{ location.address|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">City</dt><dd class="text-primary">{{ location.city|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">District</dt><dd class="text-primary">{{ location.district|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Province</dt><dd class="text-primary">{{ location.province|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Postal code</dt><dd class="text-primary">{{ location.postal_code|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Phone</dt><dd class="text-primary">{{ location.phone|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Email</dt><dd class="text-primary">{{ location.email|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Coordinates</dt><dd class="text-primary">{% if location.latitude and location.longitude %}{{ location.latitude }}, {{ location.longitude }}{% else %}—{% endif %}</dd></div>
+      <div><dt class="text-secondary">Opened on</dt><dd class="text-primary">{{ location.opened_on|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Closed on</dt><dd class="text-primary">{{ location.closed_on|default:"—" }}</dd></div>
+    </dl>
+  </c-card>
+
+  {% if restaurant %}
+  <c-card title="Restaurant profile">
+    <dl class="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2">
+      <div><dt class="text-secondary">Restaurant number</dt><dd class="text-primary">{{ restaurant.restaurant_number }}</dd></div>
+      <div><dt class="text-secondary">Type</dt><dd class="text-primary">{{ restaurant.get_restaurant_type_display }}</dd></div>
+      <div><dt class="text-secondary">Operational status</dt><dd class="text-primary"><c-badge variant="brand">{{ restaurant.get_operational_status_display }}</c-badge></dd></div>
+      <div><dt class="text-secondary">Opening date</dt><dd class="text-primary">{{ restaurant.opening_date|default:"—" }}</dd></div>
+      <div><dt class="text-secondary">Closing date</dt><dd class="text-primary">{{ restaurant.closing_date|default:"—" }}</dd></div>
+    </dl>
+    <div class="mt-4">
+      <c-button variant="secondary" href="{% url 'organization:restaurant-detail' restaurant.public_id %}">{% icon "eye" size=16 %} View restaurant</c-button>
+    </div>
+  </c-card>
+  {% endif %}
+
+  <c-card title="Departments at this location">
+    {% if departments %}
+    <c-table>
+      <thead><tr><th>Name</th><th>Code</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for department in departments %}
+        <tr>
+          <td class="font-medium">{{ department.name }}</td>
+          <td>{{ department.code }}</td>
+          <td>{% if department.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="layers" title="No departments at this location" />
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

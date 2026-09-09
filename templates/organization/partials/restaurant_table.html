@@ -1,0 +1,37 @@
+{% if restaurants %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Number</th>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Organization Unit</th>
+      <th>City</th>
+      <th>Status</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for restaurant in restaurants %}
+    <tr>
+      <td class="font-medium">{{ restaurant.restaurant_number }}</td>
+      <td>{{ restaurant.location.name }}</td>
+      <td>{{ restaurant.get_restaurant_type_display }}</td>
+      <td>{{ restaurant.location.organization_unit.name|default:"—" }}</td>
+      <td>{{ restaurant.location.city|default:"—" }}</td>
+      <td><c-badge variant="brand">{{ restaurant.get_operational_status_display }}</c-badge></td>
+      <td class="text-right">
+        <a href="{% url 'organization:restaurant-detail' restaurant.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="store" title="No restaurants yet" description="Create your first restaurant to get started.">
+  {% if perms.organization.add_restaurant %}
+  <c-button variant="primary" href="{% url 'organization:restaurant-create' %}">Create restaurant</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

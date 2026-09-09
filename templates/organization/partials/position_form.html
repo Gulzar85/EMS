@@ -1,0 +1,14 @@
+{% load crispy_forms_tags %}
+<form
+  id="position-form"
+  method="post"
+  action="{% if position %}{% url 'organization:position-update' position.public_id %}{% else %}{% url 'organization:position-create' %}{% endif %}"
+>
+  {% csrf_token %}
+  <p class="mb-4 text-sm text-secondary">Set at least one of Organization Unit or Department.</p>
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if position %}{% url 'organization:position-detail' position.public_id %}{% else %}{% url 'organization:position-list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>

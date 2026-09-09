@@ -1,0 +1,13 @@
+{% load crispy_forms_tags %}
+<form
+  id="restaurant-form"
+  method="post"
+  action="{% if restaurant %}{% url 'organization:restaurant-update' restaurant.public_id %}{% else %}{% url 'organization:restaurant-create' %}{% endif %}"
+>
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if restaurant %}{% url 'organization:restaurant-detail' restaurant.public_id %}{% else %}{% url 'organization:restaurant-list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>

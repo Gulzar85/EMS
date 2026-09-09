@@ -5,8 +5,8 @@ from apps.core import views
 app_name = "core"
 
 urlpatterns = [
-    path("", views.home, name="home"),
-    path("health/", views.health, name="health"),
-    path("health/live/", views.health_live, name="health-live"),
-    path("health/ready/", views.health_ready, name="health-ready"),
+    path("", views.HomeView.as_view(), name="home"),
+    path("health/", views.HealthView.as_view(), name="health"),
+    path("health/live/", views.HealthLiveView.as_view(), name="health-live"),
+    path("health/ready/", views.HealthReadyView.as_view(), name="health-ready"),
 ]

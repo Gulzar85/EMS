@@ -1,0 +1,39 @@
+{% if departments %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Code</th>
+      <th>Anchor</th>
+      <th>Parent</th>
+      <th>Status</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for department in departments %}
+    <tr>
+      <td class="font-medium">{{ department.name }}</td>
+      <td>{{ department.code }}</td>
+      <td>
+        {% if department.organization_unit %}{{ department.organization_unit.name }}
+        {% elif department.location %}{{ department.location.name }}
+        {% else %}—{% endif %}
+      </td>
+      <td>{{ department.parent.name|default:"—" }}</td>
+      <td>{% if department.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+      <td class="text-right">
+        <a href="{% url 'organization:department-detail' department.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="layers" title="No departments yet" description="Create your first department to start building the structure.">
+  {% if perms.organization.add_department %}
+  <c-button variant="primary" href="{% url 'organization:department-create' %}">Create department</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

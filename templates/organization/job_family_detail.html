@@ -1,0 +1,55 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ job_family.name }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'organization:dashboard' %}" class="hover:underline">Organization</a></li>
+    <li><a href="{% url 'organization:job-family-list' %}" class="hover:underline">Job Families</a></li>
+    <li class="text-primary">{{ job_family.name }}</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-semibold text-primary">{{ job_family.name }}</h1>
+        {% if not job_family.is_active %}<c-badge>Inactive</c-badge>{% endif %}
+      </div>
+      <p class="mt-1 text-sm text-secondary">Code: {{ job_family.code }}</p>
+    </div>
+    <div class="flex gap-2">
+      {% if perms.organization.change_jobfamily %}
+      <c-button variant="secondary" href="{% url 'organization:job-family-update' job_family.public_id %}">{% icon "pencil" size=16 %} Edit</c-button>
+      {% endif %}
+      {% if perms.organization.delete_jobfamily %}
+      <c-button variant="danger" href="{% url 'organization:job-family-delete' job_family.public_id %}">{% icon "trash-2" size=16 %} Delete</c-button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if job_family.description %}
+  <c-card title="Description"><p class="text-sm text-secondary">{{ job_family.description }}</p></c-card>
+  {% endif %}
+
+  <c-card title="Jobs in this family">
+    {% if jobs %}
+    <c-table>
+      <thead><tr><th>Title</th><th>Code</th><th>Level</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for job in jobs %}
+        <tr>
+          <td><a href="{% url 'organization:job-detail' job.public_id %}" class="font-medium text-brand hover:underline">{{ job.title }}</a></td>
+          <td>{{ job.code }}</td>
+          <td>{{ job.job_level.name }}</td>
+          <td>{% if job.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="briefcase" title="No jobs in this family yet" />
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

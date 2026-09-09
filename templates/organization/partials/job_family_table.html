@@ -1,0 +1,31 @@
+{% if job_families %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Code</th>
+      <th>Status</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job_family in job_families %}
+    <tr>
+      <td class="font-medium">{{ job_family.name }}</td>
+      <td>{{ job_family.code }}</td>
+      <td>{% if job_family.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+      <td class="text-right">
+        <a href="{% url 'organization:job-family-detail' job_family.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="briefcase" title="No job families yet" description="Create your first job family to start organizing jobs.">
+  {% if perms.organization.add_jobfamily %}
+  <c-button variant="primary" href="{% url 'organization:job-family-create' %}">Create job family</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

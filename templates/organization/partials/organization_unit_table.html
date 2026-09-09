@@ -1,0 +1,35 @@
+{% if units %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Code</th>
+      <th>Type</th>
+      <th>Parent</th>
+      <th>Status</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for unit in units %}
+    <tr>
+      <td class="font-medium">{{ unit.name }}</td>
+      <td>{{ unit.code }}</td>
+      <td>{{ unit.get_unit_type_display }}</td>
+      <td>{{ unit.parent.name|default:"—" }}</td>
+      <td>{% if unit.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+      <td class="text-right">
+        <a href="{% url 'organization:unit-detail' unit.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="network" title="No organization units yet" description="Create your first unit to start building the hierarchy.">
+  {% if perms.organization.add_organizationunit %}
+  <c-button variant="primary" href="{% url 'organization:unit-create' %}">Create unit</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

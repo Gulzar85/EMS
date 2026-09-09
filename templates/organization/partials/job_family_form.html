@@ -1,0 +1,13 @@
+{% load crispy_forms_tags %}
+<form
+  id="job-family-form"
+  method="post"
+  action="{% if job_family %}{% url 'organization:job-family-update' job_family.public_id %}{% else %}{% url 'organization:job-family-create' %}{% endif %}"
+>
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if job_family %}{% url 'organization:job-family-detail' job_family.public_id %}{% else %}{% url 'organization:job-family-list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>

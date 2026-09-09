@@ -11,8 +11,11 @@ from __future__ import annotations
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.db.models import Q
 from django.utils import timezone
 from django.utils.translation import gettext_lazy as _
+
+from apps.core.models import TimeStampedModel
 
 
 class UserManager(BaseUserManager):
@@ -85,3 +88,60 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self) -> str:
         return self.first_name or self.email
+
+
+class UserScope(TimeStampedModel):
+    """Object-level authorization scope, resolved against the organization
+    hierarchy (see apps/organization/permissions.py) — the centralized
+    strategy Phase 03 §54 asks for in place of scattered
+    `if user.role == ...` checks. A user may hold several scopes (e.g. an
+    Area Manager might have one ORGANIZATION_UNIT scope covering their
+    Area). Introduced now because OrganizationUnit/Location — the things
+    a scope points at — exist for the first time in Phase 03; this was
+    documented as deferred to this exact moment back in Phase 01.
+    """
+
+    class ScopeType(models.TextChoices):
+        GLOBAL = "global", "Global"
+        ORGANIZATION_UNIT = "organization_unit", "Organization Unit"
+        LOCATION = "location", "Location"
+        SELF = "self", "Self"
+
+    user = models.ForeignKey("accounts.User", on_delete=models.CASCADE, related_name="scopes")
+    scope_type = models.CharField(max_length=20, choices=ScopeType.choices)
+    organization_unit = models.ForeignKey(
+        "organization.OrganizationUnit",
+        null=True,
+        blank=True,
+        on_delete=models.CASCADE,
+        related_name="+",
+    )
+    location = models.ForeignKey(
+        "organization.Location", null=True, blank=True, on_delete=models.CASCADE, related_name="+"
+    )
+
+    class Meta:
+        constraints = [
+            models.CheckConstraint(
+                condition=(
+                    Q(scope_type="global", organization_unit__isnull=True, location__isnull=True)
+                    | Q(
+                        scope_type="organization_unit",
+                        organization_unit__isnull=False,
+                        location__isnull=True,
+                    )
+                    | Q(
+                        scope_type="location",
+                        organization_unit__isnull=True,
+                        location__isnull=False,
+                    )
+                    | Q(scope_type="self", organization_unit__isnull=True, location__isnull=True)
+                ),
+                name="userscope_fields_match_type",
+            ),
+        ]
+        indexes = [models.Index(fields=["user", "scope_type"])]
+
+    def __str__(self) -> str:
+        target = self.organization_unit or self.location or ""
+        return f"{self.user.email}: {self.get_scope_type_display()} {target}".strip()

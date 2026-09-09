@@ -1,0 +1,13 @@
+{% load crispy_forms_tags %}
+<form
+  id="job-level-form"
+  method="post"
+  action="{% if job_level %}{% url 'organization:job-level-update' job_level.public_id %}{% else %}{% url 'organization:job-level-create' %}{% endif %}"
+>
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if job_level %}{% url 'organization:job-level-detail' job_level.public_id %}{% else %}{% url 'organization:job-level-list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>

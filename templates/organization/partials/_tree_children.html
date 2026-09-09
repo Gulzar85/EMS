@@ -1,0 +1,7 @@
+{% if children %}
+{% for unit in children %}
+{% include "organization/partials/_tree_node.html" %}
+{% endfor %}
+{% else %}
+<p class="py-1 text-xs text-secondary">No child units.</p>
+{% endif %}

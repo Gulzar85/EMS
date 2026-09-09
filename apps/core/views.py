@@ -3,6 +3,13 @@
 No business logic lives here — this is purely technical-foundation glue.
 See docs/architecture/application-architecture.md for the layering rules
 this project follows once real domain apps exist.
+
+Every view here is class-based (Phase 03's absolute CBV requirement).
+Health checks and error pages use the plainest possible CBV (`View`) —
+there is no form/model/template complexity that would benefit from a
+richer generic view; forcing one on would be the over-engineering Phase
+03 §95 itself warns against. See the Phase 03 plan's FBV audit for the
+full before/after list.
 """
 
 from __future__ import annotations
@@ -10,12 +17,14 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin
 from django.core.cache import cache
 from django.db import connection
 from django.db.utils import OperationalError
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import render
+from django.views import View
+from django.views.generic import TemplateView
 
 logger = logging.getLogger("ems")
 
@@ -59,41 +68,57 @@ def _render_health(request: HttpRequest, checks: dict[str, str]) -> HttpResponse
     return JsonResponse(context, status=status_code)
 
 
-def health_live(request: HttpRequest) -> HttpResponse:
+class HealthLiveView(View):
     """Process-is-up check — no dependency calls, safe for tight liveness probes."""
-    return JsonResponse({"status": "alive"})
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        return JsonResponse({"status": "alive"})
 
 
-def health_ready(request: HttpRequest) -> HttpResponse:
+class HealthReadyView(View):
     """Dependency check — database, and Redis only if REDIS_URL is configured."""
-    checks = _run_health_checks(include_redis=True)
-    return _render_health(request, checks)
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        checks = _run_health_checks(include_redis=True)
+        return _render_health(request, checks)
 
 
-def health(request: HttpRequest) -> HttpResponse:
+class HealthView(HealthReadyView):
     """Combined endpoint most monitors hit — same as /health/ready/."""
-    return health_ready(request)
 
 
-@login_required
-def home(request: HttpRequest) -> HttpResponse:
-    checks = _run_health_checks(include_redis=True)
-    healthy = bool(checks) and all(value == "ok" for value in checks.values())
-    context = {"status": "ok" if healthy else "error", "checks": checks}
-    return render(request, "pages/home.html", context)
+class HomeView(LoginRequiredMixin, TemplateView):
+    template_name = "pages/home.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        checks = _run_health_checks(include_redis=True)
+        healthy = bool(checks) and all(value == "ok" for value in checks.values())
+        context["status"] = "ok" if healthy else "error"
+        context["checks"] = checks
+        return context
 
 
-def custom_400(request: HttpRequest, exception=None) -> HttpResponse:
-    return render(request, "pages/errors/400.html", status=400)
+class ErrorView(TemplateView):
+    """One shared CBV for all four error pages, parametrized per-handler in
+    config/urls.py via `.as_view(template_name=..., status_code=...)` —
+    exactly what Django's `.as_view(**initkwargs)` mechanism is for, not
+    four near-identical view classes.
 
+    Django invokes handler400/403/404/500 with the *original* request
+    object — whatever HTTP method triggered the error (a PermissionDenied
+    raised while handling a POST, say, must still render a 403 page, not
+    fall through to TemplateView's GET-only default and produce a bare
+    405). `dispatch()` is overridden to render unconditionally regardless
+    of method, rather than exposing `post`/`put`/`delete` aliases.
+    """
 
-def custom_403(request: HttpRequest, exception=None) -> HttpResponse:
-    return render(request, "pages/errors/403.html", status=403)
+    status_code = 500
 
+    def dispatch(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        return self.render_to_response(context)
 
-def custom_404(request: HttpRequest, exception=None) -> HttpResponse:
-    return render(request, "pages/errors/404.html", status=404)
-
-
-def custom_500(request: HttpRequest) -> HttpResponse:
-    return render(request, "pages/errors/500.html", status=500)
+    def render_to_response(self, context, **response_kwargs):
+        response_kwargs.setdefault("status", self.status_code)
+        return super().render_to_response(context, **response_kwargs)

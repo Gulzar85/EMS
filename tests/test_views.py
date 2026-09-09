@@ -72,16 +72,20 @@ def test_custom_404_page_renders_without_debug_traceback():
 
 
 def test_custom_403_view_renders_access_denied_page(rf):
-    from apps.core.views import custom_403
+    from apps.core.views import ErrorView
 
-    response = custom_403(rf.get("/anything/"))
+    view = ErrorView.as_view(template_name="pages/errors/403.html", status_code=403)
+    response = view(rf.get("/anything/"))
+    response.render()
     assert response.status_code == 403
     assert b"Access denied" in response.content
 
 
 def test_custom_500_view_renders_without_traceback(rf):
-    from apps.core.views import custom_500
+    from apps.core.views import ErrorView
 
-    response = custom_500(rf.get("/anything/"))
+    view = ErrorView.as_view(template_name="pages/errors/500.html", status_code=500)
+    response = view(rf.get("/anything/"))
+    response.render()
     assert response.status_code == 500
     assert b"Traceback" not in response.content

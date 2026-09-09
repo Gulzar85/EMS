@@ -1,0 +1,37 @@
+{% if jobs %}
+<c-table>
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Code</th>
+      <th>Family</th>
+      <th>Level</th>
+      <th>Employment Category</th>
+      <th>Status</th>
+      <th class="text-right">Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for job in jobs %}
+    <tr>
+      <td class="font-medium">{{ job.title }}</td>
+      <td>{{ job.code }}</td>
+      <td>{{ job.job_family.name }}</td>
+      <td>{{ job.job_level.name }}</td>
+      <td>{{ job.get_employment_category_display }}</td>
+      <td>{% if job.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+      <td class="text-right">
+        <a href="{% url 'organization:job-detail' job.public_id %}" class="text-sm font-medium text-brand hover:underline">View</a>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</c-table>
+<c-pagination page_obj="{{ page_obj }}" class="mt-4" />
+{% else %}
+<c-empty-state icon="briefcase" title="No jobs yet" description="Create your first job to start building the catalog.">
+  {% if perms.organization.add_job %}
+  <c-button variant="primary" href="{% url 'organization:job-create' %}">Create job</c-button>
+  {% endif %}
+</c-empty-state>
+{% endif %}

@@ -1,0 +1,13 @@
+{% load crispy_forms_tags %}
+<form
+  id="location-form"
+  method="post"
+  action="{% if location %}{% url 'organization:location-update' location.public_id %}{% else %}{% url 'organization:location-create' %}{% endif %}"
+>
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if location %}{% url 'organization:location-detail' location.public_id %}{% else %}{% url 'organization:location-list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>

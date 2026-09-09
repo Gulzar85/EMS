@@ -1,0 +1,65 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}Organization — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-5xl space-y-6">
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <h1 class="text-xl font-semibold text-primary">Organization</h1>
+    {% if perms.organization.view_organizationunit %}
+    <c-button variant="secondary" href="{% url 'organization:unit-list' %}">{% icon "network" size=16 %} Manage units</c-button>
+    {% endif %}
+  </div>
+
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Total Units</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.total_units }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Active Restaurants</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.active_restaurants }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Active Departments</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.active_departments }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Active Jobs</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.active_jobs }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Authorized Headcount</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.authorized_headcount }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Occupied Headcount</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.occupied_headcount }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Vacant Positions</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.vacant_headcount }}</p>
+    </c-card>
+    <c-card class="!p-4">
+      <p class="text-xs text-secondary">Vacancy Rate</p>
+      <p class="text-2xl font-semibold text-primary">{{ metrics.vacancy_rate }}%</p>
+    </c-card>
+  </div>
+
+  <c-card title="Organization tree">
+    {% if root_units %}
+    <div class="space-y-1">
+      {% for unit in root_units %}
+      {% include "organization/partials/_tree_node.html" %}
+      {% endfor %}
+    </div>
+    {% else %}
+    <c-empty-state icon="network" title="No organization units yet" description="Create your first unit — typically a Corporate root — to get started.">
+      {% if perms.organization.add_organizationunit %}
+      <c-button variant="primary" href="{% url 'organization:unit-create' %}">Create unit</c-button>
+      {% endif %}
+    </c-empty-state>
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

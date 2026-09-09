@@ -1,0 +1,27 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}Job Levels — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-5xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'organization:dashboard' %}" class="hover:underline">Organization</a></li>
+    <li class="text-primary">Job Levels</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <form method="get" class="max-w-xs flex-1" hx-get="{% url 'organization:job-level-list' %}" hx-target="#job-level-table" hx-swap="outerHTML" hx-trigger="input changed delay:300ms from:#id_q, search from:#id_q">
+      <label for="id_q" class="sr-only">Search job levels</label>
+      <input type="search" id="id_q" name="q" value="{{ q }}" placeholder="Search job levels…"
+             class="block w-full rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+    </form>
+    {% if perms.organization.add_joblevel %}
+    <c-button variant="primary" href="{% url 'organization:job-level-create' %}">{% icon "plus" size=16 %} New job level</c-button>
+    {% endif %}
+  </div>
+
+  <div id="job-level-table">
+    {% include "organization/partials/job_level_table.html" %}
+  </div>
+</div>
+{% endblock %}

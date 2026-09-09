@@ -374,11 +374,17 @@ class AppearanceUpdateView(LoginRequiredMixin, View):
         return HttpResponse(status=204)
 
 
-def theme_css_view(request: HttpRequest) -> HttpResponse:
+class ThemeCSSView(View):
     """Public, unauthenticated, cached — serves only presentational data
-    (colors/fonts/radii), nothing sensitive. See docs/frontend/theme-system.md."""
-    tokens = ThemeCacheService.get_active_tokens()
-    css = render_theme_css(tokens) if tokens else ""
-    response = HttpResponse(css, content_type="text/css")
-    response["Cache-Control"] = "public, max-age=3600"
-    return response
+    (colors/fonts/radii), nothing sensitive. See docs/frontend/theme-system.md.
+
+    Kept as the plainest possible CBV (`View`, one `get()` method) — a raw
+    CSS response with no form/model/template involved has no complexity a
+    richer generic view would help with (Phase 03 FBV audit)."""
+
+    def get(self, request: HttpRequest, *args, **kwargs) -> HttpResponse:
+        tokens = ThemeCacheService.get_active_tokens()
+        css = render_theme_css(tokens) if tokens else ""
+        response = HttpResponse(css, content_type="text/css")
+        response["Cache-Control"] = "public, max-age=3600"
+        return response

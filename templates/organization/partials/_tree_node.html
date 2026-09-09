@@ -1,0 +1,29 @@
+{% load icons %}
+<div x-data="{ open: false }">
+  <div class="flex items-center gap-1 rounded-[var(--radius-button)] px-2 py-1 hover:bg-background">
+    <button
+      type="button"
+      @click="open = !open"
+      hx-get="{% url 'organization:unit-children' unit.public_id %}"
+      hx-trigger="click once"
+      hx-target="#tree-children-{{ unit.public_id }}"
+      hx-swap="innerHTML"
+      class="flex h-5 w-5 shrink-0 items-center justify-center text-secondary"
+      :aria-expanded="open"
+      aria-label="Toggle children"
+    >
+      <span x-show="!open">{% icon "chevron-right" size=14 %}</span>
+      <span x-show="open" x-cloak>{% icon "chevron-down" size=14 %}</span>
+    </button>
+
+    {% if unit.unit_type == "corporate" %}{% icon "building-2" size=16 class_name="text-secondary" %}
+    {% elif unit.unit_type == "region" %}{% icon "map" size=16 class_name="text-secondary" %}
+    {% elif unit.unit_type == "area" %}{% icon "layers" size=16 class_name="text-secondary" %}
+    {% elif unit.unit_type == "business_unit" %}{% icon "briefcase" size=16 class_name="text-secondary" %}
+    {% else %}{% icon "network" size=16 class_name="text-secondary" %}{% endif %}
+
+    <a href="{% url 'organization:unit-detail' unit.public_id %}" class="text-sm text-primary hover:underline">{{ unit.name }}</a>
+    <span class="text-xs text-secondary">{{ unit.code }}</span>
+  </div>
+  <div id="tree-children-{{ unit.public_id }}" x-show="open" x-cloak class="ml-6 border-l border-default pl-2"></div>
+</div>

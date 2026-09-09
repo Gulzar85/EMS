@@ -1,0 +1,80 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ department.name }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'organization:dashboard' %}" class="hover:underline">Organization</a></li>
+    <li><a href="{% url 'organization:department-list' %}" class="hover:underline">Departments</a></li>
+    <li class="text-primary">{{ department.name }}</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-semibold text-primary">{{ department.name }}</h1>
+        {% if not department.is_active %}<c-badge>Inactive</c-badge>{% endif %}
+      </div>
+      <p class="mt-1 text-sm text-secondary">
+        Code: {{ department.code }} ·
+        Anchor:
+        {% if department.organization_unit %}{{ department.organization_unit.name }}
+        {% elif department.location %}{{ department.location.name }}
+        {% else %}—{% endif %}
+        · Parent: {{ department.parent.name|default:"—" }}
+      </p>
+    </div>
+    <div class="flex gap-2">
+      {% if perms.organization.change_department %}
+      <c-button variant="secondary" href="{% url 'organization:department-update' department.public_id %}">{% icon "pencil" size=16 %} Edit</c-button>
+      {% endif %}
+      {% if perms.organization.delete_department %}
+      <c-button variant="danger" href="{% url 'organization:department-delete' department.public_id %}">{% icon "trash-2" size=16 %} Delete</c-button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if department.description %}
+  <c-card title="Description"><p class="text-sm text-secondary">{{ department.description }}</p></c-card>
+  {% endif %}
+
+  <c-card title="Sub-departments">
+    {% if children %}
+    <c-table>
+      <thead><tr><th>Name</th><th>Code</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for child in children %}
+        <tr>
+          <td><a href="{% url 'organization:department-detail' child.public_id %}" class="font-medium text-brand hover:underline">{{ child.name }}</a></td>
+          <td>{{ child.code }}</td>
+          <td>{% if child.is_active %}<c-badge variant="success">Active</c-badge>{% else %}<c-badge>Inactive</c-badge>{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="layers" title="No sub-departments" />
+    {% endif %}
+  </c-card>
+
+  <c-card title="Positions">
+    {% if positions %}
+    <c-table>
+      <thead><tr><th>Title</th><th>Code</th><th>Job</th></tr></thead>
+      <tbody>
+        {% for position in positions %}
+        <tr>
+          <td class="font-medium">{{ position.title }}</td>
+          <td>{{ position.code }}</td>
+          <td>{{ position.job.title|default:"—" }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="briefcase" title="No positions in this department" />
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

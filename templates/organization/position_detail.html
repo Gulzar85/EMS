@@ -1,0 +1,142 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}{{ position.title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-4xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'organization:dashboard' %}" class="hover:underline">Organization</a></li>
+    <li><a href="{% url 'organization:position-list' %}" class="hover:underline">Positions</a></li>
+    <li class="text-primary">{{ position.title }}</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-start justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h1 class="text-xl font-semibold text-primary">{{ position.title }}</h1>
+        {% if position.status == "active" %}<c-badge variant="success">Active</c-badge>
+        {% elif position.status == "frozen" %}<c-badge variant="warning">Frozen</c-badge>
+        {% elif position.status == "closed" %}<c-badge variant="danger">Closed</c-badge>
+        {% else %}<c-badge>Draft</c-badge>{% endif %}
+      </div>
+      <p class="mt-1 text-sm text-secondary">
+        Code: {{ position.code }} ·
+        Job: {{ position.job.title|default:"—" }} ·
+        Type: {{ position.get_position_type_display }}
+      </p>
+    </div>
+    <div class="flex flex-wrap gap-2">
+      {% if perms.organization.change_position %}
+      <c-button variant="secondary" href="{% url 'organization:position-update' position.public_id %}">{% icon "pencil" size=16 %} Edit</c-button>
+      {% endif %}
+      {% if perms.organization.delete_position %}
+      <c-button variant="danger" href="{% url 'organization:position-delete' position.public_id %}">{% icon "trash-2" size=16 %} Delete</c-button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if perms.organization.change_position or perms.organization.add_position %}
+  <div class="flex flex-wrap gap-2">
+    {% if perms.organization.change_position %}
+      {% if position.status == "draft" %}
+      <c-button variant="primary" href="{% url 'organization:position-activate' position.public_id %}">{% icon "circle-check" size=16 %} Activate</c-button>
+      {% endif %}
+      {% if position.status == "active" %}
+      <c-button variant="secondary" href="{% url 'organization:position-freeze' position.public_id %}">{% icon "circle-alert" size=16 %} Freeze</c-button>
+      {% endif %}
+      {% if position.status == "frozen" %}
+      <c-button variant="secondary" href="{% url 'organization:position-unfreeze' position.public_id %}">{% icon "rotate-ccw" size=16 %} Unfreeze</c-button>
+      {% endif %}
+      {% if position.status == "active" or position.status == "frozen" %}
+      <c-button variant="danger" href="{% url 'organization:position-deactivate' position.public_id %}">{% icon "circle-alert" size=16 %} Deactivate</c-button>
+      {% endif %}
+    {% endif %}
+    {% if perms.organization.add_position %}
+    <c-button variant="secondary" href="{% url 'organization:position-duplicate' position.public_id %}">{% icon "copy" size=16 %} Duplicate</c-button>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <c-card title="Details">
+    <dl class="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+      <div>
+        <dt class="text-secondary">Anchor</dt>
+        <dd class="text-primary">
+          {% if position.department %}{{ position.department.name }}
+          {% elif position.organization_unit %}{{ position.organization_unit.name }}
+          {% else %}—{% endif %}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-secondary">Reports to</dt>
+        <dd class="text-primary">
+          {% if position.reports_to %}
+          <a href="{% url 'organization:position-detail' position.reports_to.public_id %}" class="text-brand hover:underline">{{ position.reports_to.title }}</a>
+          {% else %}—{% endif %}
+        </dd>
+      </div>
+      <div>
+        <dt class="text-secondary">Headcount limit</dt>
+        <dd class="text-primary">{{ position.headcount_limit }}</dd>
+      </div>
+      <div>
+        <dt class="text-secondary">Effective from</dt>
+        <dd class="text-primary">{{ position.effective_from|default:"—" }}</dd>
+      </div>
+      <div>
+        <dt class="text-secondary">Effective to</dt>
+        <dd class="text-primary">{{ position.effective_to|default:"—" }}</dd>
+      </div>
+    </dl>
+  </c-card>
+
+  <c-card title="Headcount">
+    <p class="mb-3 text-xs text-secondary">
+      Occupied headcount will reflect real employee assignments starting in Phase 04. Until then,
+      every position reads as fully vacant.
+    </p>
+    <dl class="grid grid-cols-2 gap-4 text-sm sm:grid-cols-4">
+      <div>
+        <dt class="text-secondary">Occupied</dt>
+        <dd class="text-primary">{{ position.occupied_headcount }}</dd>
+      </div>
+      <div>
+        <dt class="text-secondary">Vacant</dt>
+        <dd class="text-primary">{{ position.vacant_headcount }}</dd>
+      </div>
+      <div>
+        <dt class="text-secondary">Vacancy rate</dt>
+        <dd class="text-primary">{{ position.vacancy_rate }}%</dd>
+      </div>
+      <div>
+        <dt class="text-secondary">Utilization rate</dt>
+        <dd class="text-primary">{{ position.utilization_rate }}%</dd>
+      </div>
+    </dl>
+  </c-card>
+
+  <c-card title="Direct reports">
+    {% if direct_reports %}
+    <c-table>
+      <thead><tr><th>Title</th><th>Code</th><th>Status</th></tr></thead>
+      <tbody>
+        {% for report in direct_reports %}
+        <tr>
+          <td><a href="{% url 'organization:position-detail' report.public_id %}" class="font-medium text-brand hover:underline">{{ report.title }}</a></td>
+          <td>{{ report.code }}</td>
+          <td>
+            {% if report.status == "active" %}<c-badge variant="success">Active</c-badge>
+            {% elif report.status == "frozen" %}<c-badge variant="warning">Frozen</c-badge>
+            {% elif report.status == "closed" %}<c-badge variant="danger">Closed</c-badge>
+            {% else %}<c-badge>Draft</c-badge>{% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </c-table>
+    {% else %}
+    <c-empty-state icon="briefcase" title="No direct reports" />
+    {% endif %}
+  </c-card>
+</div>
+{% endblock %}

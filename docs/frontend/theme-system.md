@@ -26,13 +26,16 @@ class Theme(TimeStampedModel, PublicIDModel):
 
     class Meta:
         constraints = [
-            UniqueConstraint(fields=["is_active"], condition=Q(is_active=True), name="theme_single_active"),
+            UniqueConstraint(
+                fields=["is_active"], condition=Q(is_active=True), name="theme_single_active"
+            ),
         ]
         permissions = [
             ("publish_theme", "Can publish a theme version"),
             ("rollback_theme", "Can roll back a theme"),
             ("activate_theme", "Can activate a theme"),
         ]
+
 
 class ThemeVersion(TimeStampedModel, PublicIDModel):
     theme = FK(Theme, on_delete=CASCADE, related_name="versions")
@@ -44,16 +47,21 @@ class ThemeVersion(TimeStampedModel, PublicIDModel):
     published_by = FK(User, null=True, on_delete=SET_NULL, related_name="+")
 
     class Meta:
-        constraints = [UniqueConstraint(fields=["theme", "version_number"], name="uniq_theme_version_number")]
+        constraints = [
+            UniqueConstraint(fields=["theme", "version_number"], name="uniq_theme_version_number")
+        ]
 
     def save(self, *args, **kwargs):
         # Refuses to change status/tokens on an already-PUBLISHED row —
         # published versions are immutable even via Django admin.
         ...
 
+
 class UserThemePreference(TimeStampedModel):
     user = OneToOneField(User, primary_key=True, on_delete=CASCADE, related_name="theme_preference")
-    appearance = CharField(choices=[("light", ...), ("dark", ...), ("system", ...)], default="system")
+    appearance = CharField(
+        choices=[("light", ...), ("dark", ...), ("system", ...)], default="system"
+    )
 ```
 
 **Concurrency**: exactly one `Theme` may have `is_active=True` — enforced by a Postgres partial unique index, not just application logic, so two admins publishing at once fail safely at the database rather than racing into an inconsistent state. Every service that flips `is_active` or `active_version` also wraps in `transaction.atomic()` with `select_for_update()`, so the common case never even reaches that race.

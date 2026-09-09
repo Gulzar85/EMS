@@ -1,0 +1,22 @@
+{% extends "base/app.html" %}
+{% load crispy_forms_tags icons %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-md">
+  <c-card title="Deactivate {{ position.title }}">
+    <p class="mb-4 text-sm text-secondary">
+      This closes "{{ position.title }}" — it moves to Closed status and stops being eligible for
+      employee assignment. This does not delete the position.
+    </p>
+    <form method="post">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <div class="mt-4 flex gap-2">
+        <c-button type="submit" variant="danger">{% icon "circle-alert" size=16 %} Deactivate</c-button>
+        <c-button variant="secondary" href="{% url 'organization:position-detail' position.public_id %}">Cancel</c-button>
+      </div>
+    </form>
+  </c-card>
+</div>
+{% endblock %}

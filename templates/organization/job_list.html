@@ -1,0 +1,47 @@
+{% extends "base/app.html" %}
+{% load icons %}
+
+{% block title %}Jobs — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-6xl space-y-6">
+  <c-breadcrumb>
+    <li><a href="{% url 'organization:dashboard' %}" class="hover:underline">Organization</a></li>
+    <li class="text-primary">Jobs</li>
+  </c-breadcrumb>
+
+  <div class="flex flex-wrap items-center justify-between gap-4">
+    <form method="get" class="flex flex-1 flex-wrap items-center gap-2"
+          hx-get="{% url 'organization:job-list' %}" hx-target="#job-table" hx-swap="outerHTML"
+          hx-trigger="input changed delay:300ms from:#id_q, search from:#id_q, change from:#id_job_family, change from:#id_job_level">
+      <label for="id_q" class="sr-only">Search jobs</label>
+      <input type="search" id="id_q" name="q" value="{{ q }}" placeholder="Search jobs…"
+             class="block w-full max-w-xs rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+
+      <label for="id_job_family" class="sr-only">Filter by job family</label>
+      <select id="id_job_family" name="job_family"
+              class="rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+        <option value="">All job families</option>
+        {% for family in job_family_options %}
+        <option value="{{ family.id }}" {% if selected_job_family == family.id|stringformat:"s" %}selected{% endif %}>{{ family.name }}</option>
+        {% endfor %}
+      </select>
+
+      <label for="id_job_level" class="sr-only">Filter by job level</label>
+      <select id="id_job_level" name="job_level"
+              class="rounded-[var(--radius-input)] border border-default bg-surface px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-brand">
+        <option value="">All job levels</option>
+        {% for level in job_level_options %}
+        <option value="{{ level.id }}" {% if selected_job_level == level.id|stringformat:"s" %}selected{% endif %}>{{ level.name }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    {% if perms.organization.add_job %}
+    <c-button variant="primary" href="{% url 'organization:job-create' %}">{% icon "plus" size=16 %} New job</c-button>
+    {% endif %}
+  </div>
+
+  <div id="job-table">
+    {% include "organization/partials/job_table.html" %}
+  </div>
+</div>
+{% endblock %}

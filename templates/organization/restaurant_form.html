@@ -1,0 +1,10 @@
+{% extends "base/app.html" %}
+
+{% block title %}{{ page_title }} — EMS{% endblock %}
+{% block page_content %}
+<div class="mx-auto max-w-lg">
+  <c-card title="{{ page_title }}">
+    {% include "organization/partials/restaurant_form.html" %}
+  </c-card>
+</div>
+{% endblock %}

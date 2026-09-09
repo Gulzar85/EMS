@@ -1,0 +1,13 @@
+{% load crispy_forms_tags %}
+<form
+  id="organization-unit-form"
+  method="post"
+  action="{% if unit %}{% url 'organization:unit-update' unit.public_id %}{% else %}{% url 'organization:unit-create' %}{% endif %}"
+>
+  {% csrf_token %}
+  {{ form|crispy }}
+  <div class="mt-4 flex gap-2">
+    <c-button type="submit" variant="primary">Save</c-button>
+    <c-button variant="secondary" href="{% if unit %}{% url 'organization:unit-detail' unit.public_id %}{% else %}{% url 'organization:unit-list' %}{% endif %}">Cancel</c-button>
+  </div>
+</form>
